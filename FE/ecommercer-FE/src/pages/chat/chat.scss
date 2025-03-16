@@ -1,0 +1,46 @@
+.chat-container {
+  height: 100vh;
+  width: 100%;
+}
+.sendbird-chat-header__right,
+.sendbird-message-input--attach,
+.sendbird-message-content__middle__body-container__created-at {
+  display: none;
+}
+
+.sendbird-message-content.outgoing
+  .sendbird-message-content__middle
+  .sendbird-message-content__middle__body-container
+  .sendbird-message-content__middle__body-container__created-at {
+  display: none;
+}
+
+.sendbird-message-content.outgoing .sendbird-message-content__left {
+  display: none;
+}
+
+.sendbird-channel-preview
+  .sendbird-channel-preview__content
+  .sendbird-channel-preview__content__upper
+  .sendbird-channel-preview__content__upper__last-message-at {
+  display: none;
+}
+
+.cs-conversation-header {
+  border: none !important;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.main-content {
+  height: 100vh;
+}
+
+.chat-page-container {
+  padding: 0 !important;
+}
+
+.chat-page-chat {
+  height: 100% !important;
+  padding: 0 !important;
+}

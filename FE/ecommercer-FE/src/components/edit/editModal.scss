@@ -1,0 +1,63 @@
+@import '../../styles/variable.scss';
+
+.edit-modal-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  padding: 0 20px;
+
+  .edit-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px 0;
+    height: auto;
+    max-width: 400px;
+    padding: 45px;
+    background: #fff;
+    color: #000;
+    border-radius: 15px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+
+    .edit-modal-title {
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .edit-modal__input-title {
+    }
+
+    .edit-modal-email,
+    .edit-modal-password,
+    .edit-modal-username,
+    .edit-modal-fullname {
+      font-size: 19px;
+      width: 100%;
+      padding: 10px;
+      border-radius: 4px;
+    }
+
+    .edit-modal-errText {
+      color: #e6a23c;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    .edit-modal-button {
+      width: 100%;
+    }
+
+    .edit-modal-dontHave {
+      color: $linkColor;
+      text-underline-offset: 3px;
+      text-decoration: underline;
+      &:hover {
+        cursor: pointer;
+        opacity: 0.6;
+      }
+    }
+  }
+}

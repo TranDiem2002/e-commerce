@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -20,8 +22,11 @@ public class ProductEntity {
     @Column(name = "productName")
     private String productName;
 
-    @Column(name = "price")
-    private float price;
+    @Column(name = "originalPrice")
+    private float originalPrice;
+
+    @Column(name = "discount")
+    private int discount;
 
     @Column(name = "ingredients")
     private String ingredients;
@@ -44,4 +49,19 @@ public class ProductEntity {
     @ManyToOne
     @JoinColumn(name = "subCategoryId")
     private SubCategoryEntity subCategory;
+
+    @OneToMany(mappedBy = "imageId")
+    private List<ImageEntity> image;
+
+    @ManyToMany
+    @JoinTable(name = "product_skin", joinColumns = @JoinColumn(name = "product_id"),inverseJoinColumns = @JoinColumn(name = "skinTypeId"))
+    private List<SkinTypeEntity> skinTypeEntities;
+
+    @ManyToMany
+    @JoinTable(name = "product_ingredient", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "ingredientId"))
+    private List<IngredientEntity> ingredientEntities;
+
+    @ManyToMany
+    @JoinTable(name = "product_feature", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "featureId"))
+    private List<FeatureEntity> featureEntities;
 }

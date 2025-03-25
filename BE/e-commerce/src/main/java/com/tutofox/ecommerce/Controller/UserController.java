@@ -29,7 +29,7 @@ public class UserController {
         if(response != "đã add user thành công"){
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
-        return ResponseEntity.ok(userDetailsService.register(userRequest));
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/authenticate")

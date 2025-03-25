@@ -34,7 +34,7 @@ public class UserEntity implements UserDetails {
     private String password;
 
     @Column(name = "birthday")
-    private Date birthday;
+    private String birthday;
 
     @Column(name = "gender")
     private Gender gender;

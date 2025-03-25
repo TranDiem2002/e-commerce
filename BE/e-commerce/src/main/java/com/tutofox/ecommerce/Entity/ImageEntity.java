@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.GeneratedColumn;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,12 +16,13 @@ public class ImageEntity {
 
     @Id
     @Column(name = "imageId")
+    @GeneratedValue
     private int imageId;
+
+    @Column(name = "imageLink")
+    private String imageLink;
 
     @ManyToOne
     @JoinColumn(name = "productId")
     private ProductEntity product;
-
-    @Column(name = "imageLink")
-    private String imageLink;
 }

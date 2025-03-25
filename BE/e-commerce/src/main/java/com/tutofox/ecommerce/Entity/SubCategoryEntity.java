@@ -1,10 +1,13 @@
 package com.tutofox.ecommerce.Entity;
 
+import com.tutofox.ecommerce.Model.Response.ProductResponse;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,4 +26,7 @@ public class SubCategoryEntity {
 
     @Column(name = "subCategoryName")
     private String subCategoryName;
+
+    @OneToMany(mappedBy = "productId")
+    private List<ProductEntity> productEntities;
 }

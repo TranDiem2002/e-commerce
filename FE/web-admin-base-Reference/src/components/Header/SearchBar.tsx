@@ -28,11 +28,13 @@ const Logo = styled("img")({
 });
 
 const SearchBox = styled("div")(() => ({
+  marginTop: "20px",
   position: "relative",
   borderRadius: 20,
   backgroundColor: "#fff",
   border: "1px solid #ddd",
   width: "100%",
+  height: "38px",
   maxWidth: 500,
   display: "flex",
   alignItems: "center",
@@ -113,11 +115,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ cartItemsCount }) => {
             >
               <AccountCircleIcon />
             </IconButton>
-
-            <IconButton color="inherit" sx={{ color: "white" }}>
-              <FavoriteIcon />
-            </IconButton>
-
             <IconButton color="inherit" sx={{ color: "white" }}>
               <Badge badgeContent={cartItemsCount} color="error">
                 <ShoppingCartIcon />

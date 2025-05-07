@@ -23,4 +23,12 @@ public class ProductCustomerRepositoryImpl implements ProductCustomerRepository 
         query.setParameter("subCategoryId", subCategoryId);
         return query.getResultList();
     }
+
+    @Override
+    public List<ProductEntity> findByProductIdIn(List<Integer> productIds) {
+        String sql = "SELECT * FROM product WHERE product_id IN (:productIds)";
+        Query query = entityManager.createNativeQuery(sql, ProductEntity.class);
+        query.setParameter("productIds", productIds);
+        return query.getResultList();
+    }
 }

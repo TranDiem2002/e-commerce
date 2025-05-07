@@ -4,6 +4,7 @@ import { INVOICE_LINK, USER_LINK } from "../links";
 import { Box } from "@mui/material";
 import Register from "../pages/register";
 import Home from "../pages/home";
+import ProductDetail from "../pages/product";
 
 function DashBoardLayout() {
   return (
@@ -18,6 +19,7 @@ function DashBoardLayout() {
             <Route path={`${USER_LINK}`} />
             <Route path="/register" element={<Register />} />
             <Route path="/home" element={<Home />} />
+            <Route path="/product/:productId" element={<ProductDetail />} />
           </Routes>
         </Box>
       </Box>

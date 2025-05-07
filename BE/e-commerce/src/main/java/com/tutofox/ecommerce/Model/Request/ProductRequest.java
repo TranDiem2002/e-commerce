@@ -24,13 +24,17 @@ public class ProductRequest {
 
     private List<String> imageLinks;
 
-    private String ingredients;
-
-    private String skinType;
-
     private int soldCount;
 
     private int stockRemaining;
 
     private int subCategoryId;
+
+    private List<String> skinConcerns;
+
+    private List<String> skinTypes;
+
+    private List<String> ingredientList;
+
+    private List<String> features;
 }

@@ -5,6 +5,5 @@ public enum SkinType {
     Dry, // da khô
     Sensitive, // da nhạy cảm
     Normal, // da bình thường
-    Combination, // da hỗn  hợp
-    Pregnancy //da bà bầu
+    Combination // da hỗn  hợp
 }

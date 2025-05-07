@@ -1,12 +1,12 @@
 export interface products {
-    id: number;
-    name: string;
-    imageUrl: string;
-    price: number;
-    originalPrice?: number;
-    discount?: number;
-    isNew?: boolean;
-    specialPrice?: boolean;
-    rating?: number;
-    reviewCount?: number;
-  }
+  productId: number;
+  productName: string;
+  imageUrl: string;
+  price: number;
+  originalPrice: number;
+  discount: number;
+  specialPrice: boolean;
+  ratingsAvg: number;
+  reviewCount: number;
+  new: boolean;
+}

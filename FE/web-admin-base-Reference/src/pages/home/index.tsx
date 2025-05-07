@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import CategoryNavbar from "../../components/CategoryNavbar";
@@ -7,6 +8,7 @@ import Pagination from "../../components/ProductCard/Pagination";
 import axios from "axios";
 import { API_USER } from "../../links";
 import { products } from "../../data/products";
+import "./home.css";
 
 interface Category {
   categoryId: number;
@@ -38,13 +40,14 @@ interface ProductResponse {
 }
 
 const HomePage: React.FC = () => {
+  const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedInfo, setSelectedInfo] = useState<SelectedInfo>({});
   const [products, setProducts] = useState<products[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
-  const [pageSize] = useState<number>(12);
+  const [pageSize] = useState<number>(8);
 
   useEffect(() => {
     fetchCategories();
@@ -117,7 +120,14 @@ const HomePage: React.FC = () => {
         url = `${API_USER}/product/subCategory/${subCategoryId}?page=${currentPage}&size=${pageSize}`;
       }
 
-      const response = await axios.get<ProductResponse>(url);
+      const token = localStorage.getItem("token");
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+
+      const response = await axios.get<ProductResponse>(url, config);
 
       setProducts(response.data.productResponses);
       setTotalPages(response.data.totalPages);
@@ -132,7 +142,7 @@ const HomePage: React.FC = () => {
     setSelectedInfo({
       categoryId: category.categoryId,
       categoryName: category.categoryName,
-      subCategoryId: undefined,
+      subCategoryId: 1,
       subCategoryName: undefined,
     });
     setCurrentPage(1); // Reset về trang đầu tiên khi chọn danh mục mới
@@ -148,7 +158,11 @@ const HomePage: React.FC = () => {
       subCategoryId: subCategory.subCategoryId,
       subCategoryName: subCategory.subCategoryName,
     });
-    setCurrentPage(1); // Reset về trang đầu tiên khi chọn danh mục con mới
+    setCurrentPage(1);
+  };
+
+  const handleProductClick = (productId: number) => {
+    navigate(`/product/${productId}`);
   };
 
   const handlePageChange = (page: number) => {
@@ -170,10 +184,21 @@ const HomePage: React.FC = () => {
         <div style={{ flex: 1, padding: "20px" }}>
           {selectedInfo.categoryId ? (
             <div>
-              <h2 className="product-section-title">
+              <h2
+                className="product-section-title"
+                style={{ color: "#4c503d" }}
+              >
+                <img
+                  src="https://comem.vn/images/collections/flower.png"
+                  alt="flower decoration"
+                />
                 {selectedInfo.subCategoryName || selectedInfo.categoryName}
               </h2>
-              <ProductGrid products={products} loading={loading} />
+              <ProductGrid
+                products={products}
+                loading={loading}
+                onProductClick={handleProductClick}
+              />
               {!loading && totalPages > 1 && (
                 <Pagination
                   currentPage={currentPage}
@@ -184,8 +209,17 @@ const HomePage: React.FC = () => {
             </div>
           ) : (
             <div>
-              <h2 className="product-section-title">Tất cả sản phẩm</h2>
-              <ProductGrid products={products} loading={loading} />
+              <h2
+                className="product-section-title"
+                style={{ color: "#4c503d" }}
+              >
+                Tất cả sản phẩm
+              </h2>
+              <ProductGrid
+                products={products}
+                loading={loading}
+                onProductClick={handleProductClick}
+              />
               {!loading && totalPages > 1 && (
                 <Pagination
                   currentPage={currentPage}

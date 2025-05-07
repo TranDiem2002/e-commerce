@@ -28,15 +28,6 @@ public class ProductEntity {
     @Column(name = "discount")
     private int discount;
 
-    @Column(name = "ingredients")
-    private String ingredients;
-
-    @Column(name = "skinType")
-    private SkinType skinType;
-
-    @Column(name = "ratingsAvg")
-    private float ratingsAvg;
-
     @Column(name = "reviewCount")
     private int reviewCount;
 
@@ -46,6 +37,12 @@ public class ProductEntity {
     @Column(name = "stockRemaining")
     private int stockRemaining;
 
+    @Column(name = "shortDescription", columnDefinition = "TEXT")
+    private String shortDescription;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
     @ManyToOne
     @JoinColumn(name = "subCategoryId")
     private SubCategoryEntity subCategory;
@@ -54,14 +51,22 @@ public class ProductEntity {
     private List<ImageEntity> image;
 
     @ManyToMany
-    @JoinTable(name = "product_skin", joinColumns = @JoinColumn(name = "product_id"),inverseJoinColumns = @JoinColumn(name = "skinTypeId"))
+    @JoinTable(name = "product_concern", joinColumns = @JoinColumn(name = "productId"), inverseJoinColumns = @JoinColumn(name = "skinConcernId"))
+    private List<SkinConcernEntity> skinConcernEntities;
+
+    @ManyToMany
+    @JoinTable(name = "product_skin", joinColumns = @JoinColumn(name = "productId"),inverseJoinColumns = @JoinColumn(name = "skinTypeId"))
     private List<SkinTypeEntity> skinTypeEntities;
 
     @ManyToMany
-    @JoinTable(name = "product_ingredient", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "ingredientId"))
+    @JoinTable(name = "product_ingredient", joinColumns = @JoinColumn(name = "productId"), inverseJoinColumns = @JoinColumn(name = "ingredientId"))
     private List<IngredientEntity> ingredientEntities;
 
     @ManyToMany
-    @JoinTable(name = "product_feature", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "featureId"))
+    @JoinTable(name = "product_feature", joinColumns = @JoinColumn(name = "productId"), inverseJoinColumns = @JoinColumn(name = "featureId"))
     private List<FeatureEntity> featureEntities;
+
+    @ManyToMany
+    @JoinTable(name = "product_rating", joinColumns = @JoinColumn(name = "productId"), inverseJoinColumns = @JoinColumn(name = "ratingId"))
+    private List<Rating> productRatings;
 }

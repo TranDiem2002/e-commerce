@@ -2,13 +2,17 @@ package com.tutofox.ecommerce.Controller;
 
 import com.tutofox.ecommerce.Model.Request.ProductRequest;
 import com.tutofox.ecommerce.Model.Request.SubCategoryRequest;
+import com.tutofox.ecommerce.Model.Response.ProductDetailResponse;
 import com.tutofox.ecommerce.Model.Response.ProductResponse;
+import com.tutofox.ecommerce.Model.Response.ProductResponsePage;
 import com.tutofox.ecommerce.Service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,11 +45,24 @@ public class ProductController {
     }
 
     @GetMapping("/subCategory/{subCategory}")
-    public ResponseEntity<?> getProductBySubCategory(
+    public ResponseEntity<?> getProductBySubCategoryRecommend(
             @PathVariable int subCategory,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
+            @RequestParam(defaultValue = "8") int size, @AuthenticationPrincipal UserDetails userDetails) {
 
-        return ResponseEntity.ok(productService.getListByPage(subCategory, page, size));
+        ProductResponsePage productResponsePage = productService.getHybridRecommendations(userDetails, subCategory, page, size);
+        if(productResponsePage == null){
+            return ResponseEntity.ok(productService.getListByPage(userDetails, subCategory, page, size));
+        }
+        return ResponseEntity.ok(productResponsePage);
     }
+
+    @GetMapping("/{productId}")
+    public ResponseEntity<?> getProductDetail(
+            @PathVariable int productId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        ProductDetailResponse productResponse = productService.getProductDetail(userDetails, productId);
+        return ResponseEntity.ok(productResponse);
+    }
+
 }

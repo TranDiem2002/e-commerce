@@ -39,9 +39,6 @@ public class UserEntity implements UserDetails {
     @Column(name = "gender")
     private Gender gender;
 
-    @Column(name = "skinType")
-    private SkinType skinType;
-
     @Enumerated(EnumType.STRING)
     private Role role;
 
@@ -52,6 +49,10 @@ public class UserEntity implements UserDetails {
     @ManyToMany
     @JoinTable(name = "user_concerns",joinColumns = @JoinColumn(name = "userId"), inverseJoinColumns = @JoinColumn(name = "concernId"))
     private List<SkinConcernEntity> skinConcerns;
+
+    @ManyToMany
+    @JoinTable(name = "user_skin", joinColumns = @JoinColumn(name = "userId"),inverseJoinColumns = @JoinColumn(name = "skinTypeId"))
+    private List<SkinTypeEntity> skinTypeEntities;
 
     @OneToOne
     @JoinColumn(name = "cartId")

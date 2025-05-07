@@ -6,9 +6,14 @@ import "./ProductGrid.css";
 interface ProductGridProps {
   products: ProductType[] | undefined;
   loading?: boolean;
+  onProductClick?: (productId: number) => void;
 }
 
-const ProductGrid: React.FC<ProductGridProps> = ({ products, loading }) => {
+const ProductGrid: React.FC<ProductGridProps> = ({
+  products,
+  loading,
+  onProductClick,
+}) => {
   if (loading) {
     return <div className="loading-products">Đang tải sản phẩm...</div>;
   }
@@ -20,7 +25,11 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, loading }) => {
   return (
     <div className="product-grid">
       {products.map((product) => (
-        <ProductCard key={product.productId} product={product} />
+        <ProductCard
+          key={product.productId}
+          product={product}
+          onProductClick={onProductClick}
+        />
       ))}
     </div>
   );

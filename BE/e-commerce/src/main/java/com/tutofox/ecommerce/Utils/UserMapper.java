@@ -13,7 +13,6 @@ public class UserMapper {
     public UserEntity convertToEntity(UserRequest user){
         UserEntity userEntity = modelMapper.map(user, UserEntity.class);
         userEntity.setGender(Gender.valueOf(user.getGender()));
-        userEntity.setSkinType(SkinType.valueOf(user.getSkinType()));
         return userEntity;
     }
 

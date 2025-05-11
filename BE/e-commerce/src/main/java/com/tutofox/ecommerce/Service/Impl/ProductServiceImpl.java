@@ -3,16 +3,19 @@ package com.tutofox.ecommerce.Service.Impl;
 import com.tutofox.ecommerce.Caculator.ContentBaseCore;
 import com.tutofox.ecommerce.Caculator.UserBasedCollaborativeFiltering;
 import com.tutofox.ecommerce.Entity.*;
+import com.tutofox.ecommerce.Model.Request.CartProductRequest;
 import com.tutofox.ecommerce.Model.Request.ProductRequest;
 import com.tutofox.ecommerce.Model.Request.SubCategoryRequest;
 import com.tutofox.ecommerce.Model.Response.ProductDetailResponse;
 import com.tutofox.ecommerce.Model.Response.ProductResponse;
 import com.tutofox.ecommerce.Model.Response.ProductResponsePage;
+import com.tutofox.ecommerce.Model.Response.UserCartResponse;
 import com.tutofox.ecommerce.Repository.*;
 import com.tutofox.ecommerce.Repository.Customer.*;
 import com.tutofox.ecommerce.Service.ProductService;
 import com.tutofox.ecommerce.Service.UserDetailService;
 import com.tutofox.ecommerce.Utils.ProductMapper;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -70,6 +73,12 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private CartRepository cartRepository;
+
+    @Autowired
+    private ProductCartRepository productCartRepository;
 
     private ProductMapper productMapper;
 
@@ -287,4 +296,113 @@ public class ProductServiceImpl implements ProductService {
         }
         return null;
     }
+
+    @Override
+    public int addCartProduct(UserDetails userDetails, int productId) {
+        Optional<UserEntity> user = userRepository.findByEmail(userDetails.getUsername());
+
+        CartEntity cartEntity = user.get().getCartEntity();
+        List<CartProductEntity> cartProductEntities = new ArrayList<>();
+        List<CartProductEntity> cartProducts = new ArrayList<>();
+        if(cartEntity == null){
+            cartEntity = new CartEntity();
+            cartEntity = cartRepository.save(cartEntity);
+
+            UserEntity userEntity = user.get();
+            userEntity.setCartEntity(cartEntity);
+            userRepository.save(userEntity);
+
+            CartProductEntity cartProductEntity = saveCartProductEntity(new CartProductEntity(), 1, cartEntity, productId);
+            cartProductEntities.add(cartProductEntity);
+
+            cartEntity.setCartProducts(cartProductEntities);
+            cartRepository.save(cartEntity);
+            return 1;
+        }
+        cartProductEntities = cartEntity.getCartProducts();
+        if (cartProductEntities.isEmpty()){
+            cartProductEntities.add(saveCartProductEntity(new CartProductEntity(), 1,cartEntity,productId));
+            cartEntity.setCartProducts(cartProductEntities);
+            cartRepository.save(cartEntity);
+        }
+        else{
+            cartProductEntities.forEach( productCart -> {
+                if(productCart.getProduct().getProductId() == productId)
+                    cartProducts.add(productCart);
+            });
+            if(cartProducts.isEmpty()){
+                cartProductEntities.add(saveCartProductEntity(new CartProductEntity(), 1,cartEntity,productId));
+                cartEntity.setCartProducts(cartProductEntities);
+                cartRepository.save(cartEntity);
+            }
+            else {
+                cartProductEntities.add(saveCartProductEntity(cartProducts.get(0), cartProducts.get(0).getQuantity()+1,cartEntity,productId));
+                cartEntity.setCartProducts(cartProductEntities);
+                cartRepository.save(cartEntity);
+            }
+        }
+        return user.get().getCartEntity().getCartProducts().size();
+    }
+
+    @Override
+    public List<UserCartResponse> updateCartProduct(UserDetails userDetails, int productId, int quantity) {
+        UserEntity userEntity = userRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        CartEntity cartEntity = userEntity.getCartEntity();
+        List<CartProductEntity> cartProductEntities = cartEntity.getCartProducts();
+
+        for (CartProductEntity cartProduct : cartProductEntities) {
+            if (cartProduct.getProduct().getProductId() == productId) {
+                cartProduct.setQuantity(quantity);
+                productCartRepository.save(cartProduct);
+                break;
+            }
+        }
+
+        return getCartUser(userDetails);
+    }
+
+    @Override
+    public List<UserCartResponse> removeCartProduct(UserDetails userDetails, int productId) {
+        UserEntity userEntity = userRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        CartEntity cartEntity = userEntity.getCartEntity();
+        List<CartProductEntity> cartProductEntities = cartEntity.getCartProducts();
+
+        for (CartProductEntity cartProduct : cartProductEntities) {
+            if (cartProduct.getProduct().getProductId() == productId) {
+                productCartRepository.delete(cartProduct);
+                break;
+            }
+        }
+        return getCartUser(userDetails);
+    }
+
+    @Override
+    public List<UserCartResponse> getCartUser(UserDetails userDetails) {
+        UserEntity userEntity = userRepository.findByEmail(userDetails.getUsername()).get();
+        CartEntity cartEntity = userEntity.getCartEntity();
+        if(cartEntity == null)
+            return new ArrayList<>();
+        List<CartProductEntity> cartProductEntities = cartEntity.getCartProducts();
+        if(cartProductEntities.isEmpty())
+            return new ArrayList<>();
+        return cartProductEntities.stream()
+                .map(x -> {
+                    return productMapper.convertToProductCart(
+                            x,
+                            imageCustomerRepository.getImageByProductId(x.getProduct().getProductId())
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+
+
+    private CartProductEntity saveCartProductEntity(CartProductEntity cartProductEntity, int quantity, CartEntity cart, int productId){
+        cartProductEntity = productCartRepository.save(cartProductEntity);
+        cartProductEntity.setProduct(productRepository.findById(productId).get());
+        cartProductEntity.setQuantity(quantity);
+        cartProductEntity.setCart(cart);
+       return productCartRepository.save(cartProductEntity);
+    }
+
 }

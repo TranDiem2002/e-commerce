@@ -5,6 +5,7 @@ import { Box } from "@mui/material";
 import Register from "../pages/register";
 import Home from "../pages/home";
 import ProductDetail from "../pages/product";
+import CartPage from "../pages/cart";
 
 function DashBoardLayout() {
   return (
@@ -20,6 +21,7 @@ function DashBoardLayout() {
             <Route path="/register" element={<Register />} />
             <Route path="/home" element={<Home />} />
             <Route path="/product/:productId" element={<ProductDetail />} />
+            <Route path="/cart" element={<CartPage />} />
           </Routes>
         </Box>
       </Box>

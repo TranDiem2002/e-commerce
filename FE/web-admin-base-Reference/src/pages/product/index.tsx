@@ -4,13 +4,11 @@ import axios from "axios";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { API_USER } from "../../links";
-import { useCart } from "../cart/index";
 
 const ProductDetail: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
   const [product, setProduct] = useState<any>(null);
   const [mainImage, setMainImage] = useState<string | null>(null);
-  const { addToCart } = useCart();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -106,10 +104,26 @@ const ProductDetail: React.FC = () => {
     });
   };
 
-  const handleAddToCart = () => {
-    if (product) {
-      addToCart(product, 1);
+  const handleAddToCart = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json", // Keeping this as it's needed for POST
+        },
+      };
+
+      await axios.post(
+        `${API_USER}/product/addCart`,
+        { productId: product.productId },
+        config
+      );
+
       alert(`Đã thêm ${product.productName} vào giỏ hàng!`);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      alert("Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng.");
     }
   };
 

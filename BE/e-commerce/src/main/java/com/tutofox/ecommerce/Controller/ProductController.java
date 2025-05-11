@@ -1,7 +1,9 @@
 package com.tutofox.ecommerce.Controller;
 
+import com.tutofox.ecommerce.Model.Request.CartProductRequest;
 import com.tutofox.ecommerce.Model.Request.ProductRequest;
 import com.tutofox.ecommerce.Model.Request.SubCategoryRequest;
+import com.tutofox.ecommerce.Model.Request.UserCartRequest;
 import com.tutofox.ecommerce.Model.Response.ProductDetailResponse;
 import com.tutofox.ecommerce.Model.Response.ProductResponse;
 import com.tutofox.ecommerce.Model.Response.ProductResponsePage;
@@ -63,6 +65,26 @@ public class ProductController {
             @AuthenticationPrincipal UserDetails userDetails) {
         ProductDetailResponse productResponse = productService.getProductDetail(userDetails, productId);
         return ResponseEntity.ok(productResponse);
+    }
+
+    @PostMapping("/addCart")
+    public ResponseEntity<?> addProductCart(@AuthenticationPrincipal UserDetails userDetails, @RequestBody CartProductRequest cart) {
+        return ResponseEntity.ok(productService.addCartProduct(userDetails, cart.getProductId()));
+    }
+
+    @PostMapping("/updateCart")
+    public ResponseEntity<?> updateProductCart(@AuthenticationPrincipal UserDetails userDetails, @RequestBody UserCartRequest cart) {
+        return ResponseEntity.ok(productService.updateCartProduct(userDetails, cart.getProductId(), cart.getQuantity()));
+    }
+
+    @PostMapping("/deleteCart")
+    public ResponseEntity<?> removeProductCart(@AuthenticationPrincipal UserDetails userDetails, @RequestBody CartProductRequest cart) {
+        return ResponseEntity.ok(productService.removeCartProduct(userDetails, cart.getProductId()));
+    }
+
+    @GetMapping("/getCart")
+    public ResponseEntity<?> getCartUser(@AuthenticationPrincipal UserDetails userDetails){
+        return ResponseEntity.ok(productService.getCartUser(userDetails));
     }
 
 }

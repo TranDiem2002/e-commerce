@@ -1,11 +1,13 @@
 package com.tutofox.ecommerce.Utils;
 
+import com.tutofox.ecommerce.Entity.CartProductEntity;
 import com.tutofox.ecommerce.Entity.ImageEntity;
 import com.tutofox.ecommerce.Entity.ProductEntity;
 import com.tutofox.ecommerce.Entity.SkinType;
 import com.tutofox.ecommerce.Model.Request.ProductRequest;
 import com.tutofox.ecommerce.Model.Response.ProductDetailResponse;
 import com.tutofox.ecommerce.Model.Response.ProductResponse;
+import com.tutofox.ecommerce.Model.Response.UserCartResponse;
 import org.modelmapper.ModelMapper;
 
 import java.util.List;
@@ -37,5 +39,12 @@ public class ProductMapper {
         }
         productDetailResponse.setPrice((productEntity.getOriginalPrice()/100) * (100 - productDetailResponse.getDiscount()));
         return productDetailResponse;
+    }
+
+    public UserCartResponse convertToProductCart(CartProductEntity entity, List<ImageEntity> imageEntities){
+        ProductEntity product = entity.getProduct();
+        float price = (product.getOriginalPrice()/100) * (100 - product.getDiscount());
+        return new UserCartResponse(product.getProductId(), product.getProductName(),
+                imageEntities.get(0).getImageLink(), price, product.getOriginalPrice(), entity.getQuantity() );
     }
 }

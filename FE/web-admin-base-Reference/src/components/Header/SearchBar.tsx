@@ -11,7 +11,6 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import FavoriteIcon from "@mui/icons-material/Favorite";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import StoreIcon from "@mui/icons-material/Store";
 import logoHome from "../../assets/ic_shop.png";
@@ -53,11 +52,16 @@ interface SearchBarProps {
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ cartItemsCount }) => {
-  const navigate = useNavigate(); // Hook để điều hướng
+  const navigate = useNavigate();
 
   // Hàm xử lý khi nhấp vào icon tài khoản
   const handleAccountClick = () => {
-    navigate(LOGIN_LINK); // Chuyển hướng đến trang đăng nhập
+    navigate(LOGIN_LINK);
+  };
+
+  // Hàm xử lý khi nhấp vào icon giỏ hàng
+  const handleCartClick = () => {
+    navigate("/cart"); // Điều hướng đến trang giỏ hàng
   };
 
   return (
@@ -111,11 +115,15 @@ const SearchBar: React.FC<SearchBarProps> = ({ cartItemsCount }) => {
             <IconButton
               color="inherit"
               sx={{ color: "white" }}
-              onClick={handleAccountClick} // Thêm sự kiện onClick
+              onClick={handleAccountClick}
             >
               <AccountCircleIcon />
             </IconButton>
-            <IconButton color="inherit" sx={{ color: "white" }}>
+            <IconButton
+              color="inherit"
+              sx={{ color: "white" }}
+              onClick={handleCartClick} // Thêm sự kiện onClick cho giỏ hàng
+            >
               <Badge badgeContent={cartItemsCount} color="error">
                 <ShoppingCartIcon />
               </Badge>

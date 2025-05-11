@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @NoArgsConstructor
@@ -16,14 +17,10 @@ import java.util.List;
 public class CartEntity {
 
     @Id
-    @Column(name = "cartId")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int cartId;
 
-    @ManyToMany
-    @JoinTable(name = "user_cart",joinColumns = @JoinColumn(name = "cartId"), inverseJoinColumns = @JoinColumn(name = "productId"))
-    private List<ProductEntity> products;
-
-    @Column(name = "quantity")
-    private int quantity;
+    @OneToMany(mappedBy = "cart")
+    private List<CartProductEntity> cartProducts;
 
 }

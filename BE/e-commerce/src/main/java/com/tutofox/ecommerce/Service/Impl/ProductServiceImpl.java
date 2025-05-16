@@ -121,6 +121,8 @@ public class ProductServiceImpl implements ProductService {
 
         productEntity.setImage(imageEntities1);
         productEntity.setSubCategory(subCategoryEntity.get());
+        productEntity.setShortDescription(productRequest.getShortDescription());
+        productEntity.setDescription(productRequest.getDescription());
         productRepository.save(productEntity);
         return "Đã thêm sản phẩm thành công";
     }

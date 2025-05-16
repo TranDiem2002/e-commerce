@@ -30,6 +30,10 @@ public class ProductRequest {
 
     private int subCategoryId;
 
+    private String shortDescription;
+
+    private String description;
+
     private List<String> skinConcerns;
 
     private List<String> skinTypes;

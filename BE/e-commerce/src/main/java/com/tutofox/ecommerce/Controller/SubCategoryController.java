@@ -1,5 +1,6 @@
 package com.tutofox.ecommerce.Controller;
 
+import com.tutofox.ecommerce.Model.Request.CategoryRequest;
 import com.tutofox.ecommerce.Model.Request.SubCategoryRequest;
 import com.tutofox.ecommerce.Service.SubCategoryService;
 import lombok.RequiredArgsConstructor;
@@ -34,5 +35,40 @@ public class SubCategoryController {
         if(response != "Đã thêm sub category thành công")
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/addOne")
+    public ResponseEntity<?> addOneCategory(@RequestBody SubCategoryRequest subCategoryRequest, Authentication authentication){
+        if (check(authentication) != null) {
+            return new ResponseEntity<>(check(authentication), HttpStatus.FORBIDDEN);
+        }
+        subCategoryService.insertSubCategory(subCategoryRequest);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @PostMapping("/update")
+    public ResponseEntity<?> updateCategory(@RequestBody SubCategoryRequest subCategoryRequest, Authentication authentication){
+        if (check(authentication) != null) {
+            return new ResponseEntity<>(check(authentication), HttpStatus.FORBIDDEN);
+        }
+        subCategoryService.updateSubCategory(subCategoryRequest);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PostMapping("/delete")
+    public ResponseEntity<?> deleteCategory(@RequestBody SubCategoryRequest subCategoryRequest, Authentication authentication){
+        if (check(authentication) != null) {
+            return new ResponseEntity<>(check(authentication), HttpStatus.FORBIDDEN);
+        }
+        subCategoryService.deleteSubCategory(subCategoryRequest.getSubCategoryId());
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    public  String check(Authentication authentication){
+        if (authentication == null || !authentication.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ADMIN"))) {
+            return "Bạn không có quyền thêm phân loại sản phẩm!";
+        }
+        return null;
     }
 }

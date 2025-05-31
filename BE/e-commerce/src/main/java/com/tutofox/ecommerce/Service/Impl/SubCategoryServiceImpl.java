@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -79,5 +80,39 @@ public class SubCategoryServiceImpl implements SubCategoryService {
 
         return "Đã thêm sub category thành công";
     }
+
+    @Override
+    public void insertSubCategory(SubCategoryRequest subCategoryRequest) {
+        SubCategoryEntity subCategory = new SubCategoryEntity();
+        List<SubCategoryEntity> subCategoryEntities = subCategoryRespository.findAll();
+        if(!subCategoryEntities.isEmpty()){
+            subCategory.setSubCategoryId(subCategoryEntities.size());
+        }
+        else
+            subCategory.setSubCategoryId(1);
+        subCategory.setSubCategoryName(subCategoryRequest.getSubCategoryName());
+        subCategory.setCategory(categoryRepository.findById(subCategoryRequest.getCategoryId()).get());
+        subCategoryRespository.save(subCategory);
+    }
+
+    @Override
+    public void updateSubCategory(SubCategoryRequest subCategoryRequest) {
+        Optional<SubCategoryEntity> subCategory = subCategoryRespository.findById(subCategoryRequest.getSubCategoryId());
+        if(subCategory.isPresent()){
+            SubCategoryEntity subCategoryEntity = subCategory.get();
+            subCategoryEntity.setSubCategoryName(subCategoryRequest.getSubCategoryName());
+            subCategoryRespository.save(subCategoryEntity);
+        }
+    }
+
+    @Override
+    public void deleteSubCategory(int subCategoryId) {
+        Optional<SubCategoryEntity> subCategory = subCategoryRespository.findById(subCategoryId);
+        if(subCategory.isPresent()){
+            subCategoryRespository.deleteById(subCategory.get().getSubCategoryId());
+        }
+    }
+
+
 
 }

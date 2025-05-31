@@ -1,11 +1,15 @@
 package com.tutofox.ecommerce.Service.Impl;
 
 import com.tutofox.ecommerce.Entity.CategoryEntity;
+import com.tutofox.ecommerce.Entity.ProductEntity;
 import com.tutofox.ecommerce.Entity.SubCategoryEntity;
 import com.tutofox.ecommerce.Model.Request.CategoryRequest;
+import com.tutofox.ecommerce.Model.Request.SubCategoryRequest;
 import com.tutofox.ecommerce.Model.Response.CategoryResponse;
 import com.tutofox.ecommerce.Repository.CategoryRepository;
+import com.tutofox.ecommerce.Repository.Customer.ProductCustomerRepository;
 import com.tutofox.ecommerce.Repository.Customer.SubCategoryCustomerRespository;
+import com.tutofox.ecommerce.Repository.ProductRepository;
 import com.tutofox.ecommerce.Repository.SubCategoryRespository;
 import com.tutofox.ecommerce.Service.CategoryService;
 import com.tutofox.ecommerce.Utils.CategoryMapper;
@@ -29,6 +33,12 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Autowired
     private SubCategoryCustomerRespository subCategoryCustomerRespository;
+
+    @Autowired
+    private ProductCustomerRepository productCustomerRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
 
     private CategoryMapper categoryMapper;
 
@@ -79,5 +89,38 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryResponses;
     }
 
+    @Override
+    public void insertCategory(CategoryRequest categoryRequest) {
+        CategoryEntity category = new CategoryEntity();
+        List<CategoryEntity> categoryEntities = categoryRepository.findAll();
+        if(!categoryEntities.isEmpty()){
+            category.setCategoryId(categoryEntities.get(categoryEntities.size()-1).getCategoryId() + 1);
+        }
+        else
+            category.setCategoryId(1);
+        category.setCategoryName(categoryRequest.getCatogoryName());
+        category.setCategoryStatus(true);
+        categoryRepository.save(category);
+    }
 
+    @Override
+    public void updateCategory(CategoryRequest categoryRequest) {
+        Optional<CategoryEntity> category = categoryRepository.findById(categoryRequest.getCatogoryId());
+        if(category.isPresent()){
+            CategoryEntity categoryEntity = category.get();
+            categoryEntity.setCategoryName(categoryRequest.getCatogoryName());
+            categoryEntity.setCategoryStatus(categoryRequest.isCategoryStatus());
+            categoryRepository.save(categoryEntity);
+        }
+    }
+
+    @Override
+    public void deleteCategory(int categoryId) {
+       Optional<CategoryEntity> category = categoryRepository.findById(categoryId);
+       if(category.isPresent()){
+           CategoryEntity categoryEntity = category.get();
+           categoryEntity.setCategoryStatus(false);
+           categoryRepository.save(categoryEntity);
+       }
+    }
 }

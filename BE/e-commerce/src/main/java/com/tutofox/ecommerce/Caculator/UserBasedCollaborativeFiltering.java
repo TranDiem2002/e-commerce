@@ -3,6 +3,7 @@ package com.tutofox.ecommerce.Caculator;
 import com.tutofox.ecommerce.Entity.*;
 import com.tutofox.ecommerce.Repository.Customer.ProductCustomerRepository;
 import com.tutofox.ecommerce.Repository.Customer.ProductRatingCustomerRepository;
+import com.tutofox.ecommerce.Repository.PurchasedOrdersRepository;
 import com.tutofox.ecommerce.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,22 +23,33 @@ public class UserBasedCollaborativeFiltering {
     @Autowired
     private ProductCustomerRepository productCustomerRepository;
 
+    @Autowired
+    private ContentBaseCore contentBaseCore;
+
+    @Autowired
+    private PurchasedOrdersRepository purchasedOrdersRepository;
+
     // tìm người dùng tương đồng với người dùng đăng nhập
     private List<UserSimilarity> findSimilarUser (UserEntity user,int subCategoryId){
         List<UserSimilarity> userSimilarities = new ArrayList<>();
-
+        List<ProductEntity> productEntities = new ArrayList<>();
         List<UserEntity> userEntities = userRepository.findAll();
-
         for(UserEntity userEntity : userEntities){
             if(userEntity.getUserId() == user.getUserId()){
                 continue;
             }
-
-            List<ProductEntity> filteredProducts = userEntity.getPurchasedOrderEntity().getProducts().stream()
-                    .filter(product -> product.getSubCategory().getSubCategoryId() == subCategoryId)
+            List<PurchasedOrderEntity> purchasedOrderEntities = purchasedOrdersRepository.findAll().stream()
+                    .filter(x -> x.getUserEntity().getUserId() == user.getUserId())
                     .collect(Collectors.toList());
-
-            if(!filteredProducts.isEmpty()){
+            if(purchasedOrderEntities.isEmpty())
+                continue;
+            purchasedOrderEntities.forEach(purchasedOrderEntity -> {
+                List<PurchasedProductEntity> purchasedProductEntities = purchasedOrderEntity.getPurchasedProducts();
+                purchasedProductEntities.forEach(purchasedProductEntity -> {
+                    if (!productEntities.contains(purchasedProductEntity.getProductEntity()))
+                        productEntities.add(purchasedProductEntity.getProductEntity());});
+            });
+            if(!productEntities.isEmpty()){
                 double similar = calculateSimilarity(user, userEntity, subCategoryId);
                 userSimilarities.add(new UserSimilarity(userEntity, similar));
             }
@@ -58,19 +70,15 @@ public class UserBasedCollaborativeFiltering {
         Set<Integer> skinType1  = user1.getSkinTypeEntities().stream()
                 .map(SkinTypeEntity::getSkinTypeId)
                 .collect(Collectors.toSet());
-
         Set<Integer> skinConcern1 = user1.getSkinConcerns().stream()
                 .map(SkinConcernEntity::getConcernId)
                 .collect(Collectors.toSet());
-
         Set<Integer> skinType2  = user2.getSkinTypeEntities().stream()
                 .map(SkinTypeEntity::getSkinTypeId)
                 .collect(Collectors.toSet());
-
         Set<Integer> skinConcern2 = user2.getSkinConcerns().stream()
                 .map(SkinConcernEntity::getConcernId)
                 .collect(Collectors.toSet());
-
         double skinType = calculateJaccardSimilarity(skinType1, skinType2);
         double skinConcern = calculateJaccardSimilarity(skinConcern1, skinConcern2);
         return (skinType + skinConcern)/2;
@@ -155,56 +163,39 @@ public class UserBasedCollaborativeFiltering {
     public List<ProductEntity> recommendProductsUserBased(UserEntity user,int subCategoryId) {
         //  Tìm những người dùng tương tự
         List<UserSimilarity> similarUsers = findSimilarUser(user, subCategoryId);
-
         //  Xây dựng map điểm số cho sản phẩm
         Map<Integer, Double> productScores = new HashMap<>();
         Map<Integer, Integer> productCounts = new HashMap<>();
-
         // Lấy các sản phẩm mà người dùng hiện tại đã mua/đánh giá
         Set<Integer> userProducts = getUserProducts(user, subCategoryId);
-
+        if(similarUsers.isEmpty()){
+            contentBaseCore.calculateContentBasedScore(user, productCustomerRepository.getAllProductBySubCategory(subCategoryId));}
         // Duyệt qua từng người dùng tương tự
         for (UserSimilarity similarUser : similarUsers) {
             UserEntity otherUser = similarUser.getUser();
             double similarity = similarUser.getSimilarity();
-
             // Lấy đánh giá từ người dùng tương tự
             List<Rating> otherRatings = productRating.getByUserId(otherUser.getUserId());
-
             for (Rating rating : otherRatings) {
                 Optional<Integer> product = productRating.getProductByRatingId(rating.getRatingId());
-
                 if (product.isPresent()) {
                     int productId = product.get();
                     // Bỏ qua sản phẩm mà người dùng mục tiêu đã mua/đánh giá
-                    if (userProducts.contains(productId)) {
-                        continue;
-                    }
-
+                    if (userProducts.contains(productId)) {continue;}
                     // Tính điểm có trọng số
                     float ratingValue = rating.getRating();
                     double weightedRating = ratingValue * similarity;
-
-                    productScores.put(productId,
-                            productScores.getOrDefault(productId, 0.0) + weightedRating);
-
-                    productCounts.put(productId,
-                            productCounts.getOrDefault(productId, 0) + 1);
-                }
-            }
-        }
-
+                    productScores.put(productId, productScores.getOrDefault(productId, 0.0) + weightedRating);
+                    productCounts.put(productId, productCounts.getOrDefault(productId, 0) + 1);
+                }}}
         //  Tính điểm trung bình
         Map<Integer, Double> normalizedScores = new HashMap<>();
-
         for (Map.Entry<Integer, Double> entry : productScores.entrySet()) {
             int productId = entry.getKey();
             double totalScore = entry.getValue();
             int count = productCounts.get(productId);
-
             normalizedScores.put(productId, totalScore / count);
         }
-
         // Sắp xếp sản phẩm theo điểm và trả về kết quả
         List<Integer> recommendedProductIds;
         if (normalizedScores == null || normalizedScores.isEmpty()) {
@@ -215,7 +206,6 @@ public class UserBasedCollaborativeFiltering {
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toList());
         }
-
         return productCustomerRepository.findByProductIdIn(recommendedProductIds);
     }
 
@@ -223,13 +213,22 @@ public class UserBasedCollaborativeFiltering {
     private Set<Integer> getUserProducts(UserEntity user,int subCategoryId) {
 
         List<Integer> productIds = new ArrayList<>();
-        //lịch sử mua hàng của người dùng
-        if(user.getPurchasedOrderEntity() != null){
-            productIds.addAll(user.getPurchasedOrderEntity().getProducts().stream()
-                            .filter(product -> product.getSubCategory().getSubCategoryId() == subCategoryId)
-                            .map(product -> product.getProductId())
-                            .collect(Collectors.toList()));
-        }
+
+        List<PurchasedOrderEntity> purchasedOrderEntities = purchasedOrdersRepository.findAll().stream()
+                .filter(x -> x.getUserEntity().getUserId() == user.getUserId())
+                .collect(Collectors.toList());
+
+        if(purchasedOrderEntities.isEmpty())
+            return null;
+
+        purchasedOrderEntities.forEach(purchasedOrderEntity -> {
+            List<PurchasedProductEntity> purchasedProductEntities = purchasedOrderEntity.getPurchasedProducts();
+            purchasedProductEntities.forEach(purchasedProductEntity -> {
+                if (!productIds.contains(purchasedProductEntity.getProductEntity().getProductId()))
+                    productIds.add(purchasedProductEntity.getProductEntity().getProductId());
+            });
+        });
+
         return new HashSet<>(productIds);
     }
 }

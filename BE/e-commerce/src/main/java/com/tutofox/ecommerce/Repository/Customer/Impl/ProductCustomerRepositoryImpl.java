@@ -31,4 +31,12 @@ public class ProductCustomerRepositoryImpl implements ProductCustomerRepository 
         query.setParameter("productIds", productIds);
         return query.getResultList();
     }
+
+    @Override
+    public List<ProductEntity> searchByProductName(String contentSearch) {
+        StringBuilder sql = new StringBuilder("SELECT * FROM product WHERE product_name like '%");
+        sql.append(contentSearch + "%'");
+        Query query = entityManager.createNativeQuery(sql.toString(), ProductEntity.class);
+        return query.getResultList();
+    }
 }

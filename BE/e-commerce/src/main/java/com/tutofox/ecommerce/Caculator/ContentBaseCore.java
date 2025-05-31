@@ -66,40 +66,29 @@ public class ContentBaseCore {
         Map<String, Double> userVector = new HashMap<>();
         // Map kết quả chứa tổng giá trị
         Map<String, Double> sumValues = new HashMap<>();
-
         // Map đếm số lần xuất hiện của mỗi key
         Map<String, Integer> keyCount = new HashMap<>();
-
         List<Map<String, Double>> userSkin = new ArrayList<>();
-
         userSkin.addAll(skinTypeEntities.stream()
                         .map(skinType -> getSkinTypePreferences(SkinType.valueOf(skinType.getSkinTypeName())))
-                        .collect(Collectors.toList())
-        );
-
+                        .collect(Collectors.toList()));
         userSkin.addAll(skinConcernEntities.stream()
                         .map( skinConcern -> getSkinConcernPreferences(SkinConcerns.valueOf(skinConcern.getConcernName())))
-                        .collect(Collectors.toList())
-                );
-
+                        .collect(Collectors.toList()));
         for (Map<String, Double> setting : userSkin) {
             for (Map.Entry<String, Double> entry : setting.entrySet()) {
                 String key = entry.getKey();
                 Double value = entry.getValue();
                 sumValues.put(key, sumValues.getOrDefault(key, 0.0) + value);
-                keyCount.put(key, keyCount.getOrDefault(key, 0) + 1);
-            }
+                keyCount.put(key, keyCount.getOrDefault(key, 0) + 1);}
         }
-
         // Tính giá trị trung bình cho mỗi key
         for (Map.Entry<String, Double> entry : sumValues.entrySet()) {
             String key = entry.getKey();
             Double sum = entry.getValue();
             Integer count = keyCount.get(key);
-
             // Tính trung bình và lưu vào kết quả
-            userVector.put(key, sum / count);
-        }
+            userVector.put(key, sum / count);}
         skinTypeEntities.forEach(x -> userVector.put(x.getSkinTypeName(), 1.0));
         skinConcernEntities.forEach(x -> userVector.put(x.getConcernName(), 1.0));
         return userVector;
@@ -140,31 +129,23 @@ public class ContentBaseCore {
 
     private Map<Integer,Map<String, Double>> calculateProductBySubCategory(List<ProductEntity> productEntities){
         Map<Integer,Map<String,Double>> productMap = new HashMap<>();
-
-        if(productEntities.isEmpty())
-            return null;
+        if(productEntities.isEmpty()) return null;
         productEntities.forEach(product -> {
             Map<String, Double> productList = new HashMap<>();
-
             List<IngredientEntity> ingredientEntities = product.getIngredientEntities();
             if(!ingredientEntities.isEmpty()){
                 ingredientEntities.forEach(ingredient -> {
                     productList.put(ingredient.getIngredientName(), 1.0);
-                });
-            }
-
+                });}
             List<FeatureEntity> featureEntities = product.getFeatureEntities();
             if(!featureEntities.isEmpty()){
                 featureEntities.forEach(feature -> {
-                    productList.put(feature.getFeatureName(), 1.0);
-                });
+                    productList.put(feature.getFeatureName(), 1.0);});
             }
-
             List<SkinConcernEntity> skinConcernEntities = product.getSkinConcernEntities();
             if(!skinConcernEntities.isEmpty()){
                 skinConcernEntities.forEach(concern -> {
-                    productList.put(concern.getConcernName(), 1.0);
-                });
+                    productList.put(concern.getConcernName(), 1.0);});
             }
             List<SkinTypeEntity> skinTypeEntities = product.getSkinTypeEntities();
             if(!skinTypeEntities.isEmpty()){
@@ -172,7 +153,6 @@ public class ContentBaseCore {
                     productList.put(type.getSkinTypeName(), 1.0);
                 });
             }
-
             productMap.put(product.getProductId(), productList);
         });
         return productMap;

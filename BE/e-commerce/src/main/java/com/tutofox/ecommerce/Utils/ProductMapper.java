@@ -38,6 +38,8 @@ public class ProductMapper {
             productDetailResponse.setImageUrl(imageEntities.stream().map(x -> x.getImageLink()).collect(Collectors.toList()));
         }
         productDetailResponse.setPrice((productEntity.getOriginalPrice()/100) * (100 - productDetailResponse.getDiscount()));
+        productDetailResponse.setSubCtgId(productEntity.getSubCategory().getSubCategoryId());
+        productDetailResponse.setSubCtgName(productEntity.getSubCategory().getSubCategoryName());
         return productDetailResponse;
     }
 
@@ -45,6 +47,6 @@ public class ProductMapper {
         ProductEntity product = entity.getProduct();
         float price = (product.getOriginalPrice()/100) * (100 - product.getDiscount());
         return new UserCartResponse(product.getProductId(), product.getProductName(),
-                imageEntities.get(0).getImageLink(), price, product.getOriginalPrice(), entity.getQuantity() );
+                imageEntities.get(0).getImageLink(), price, product.getOriginalPrice(), entity.getQuantity(), true);
     }
 }

@@ -3,19 +3,13 @@ package com.tutofox.ecommerce.Service.Impl;
 import com.tutofox.ecommerce.Caculator.ContentBaseCore;
 import com.tutofox.ecommerce.Caculator.UserBasedCollaborativeFiltering;
 import com.tutofox.ecommerce.Entity.*;
-import com.tutofox.ecommerce.Model.Request.CartProductRequest;
 import com.tutofox.ecommerce.Model.Request.ProductRequest;
 import com.tutofox.ecommerce.Model.Request.SubCategoryRequest;
-import com.tutofox.ecommerce.Model.Response.ProductDetailResponse;
-import com.tutofox.ecommerce.Model.Response.ProductResponse;
-import com.tutofox.ecommerce.Model.Response.ProductResponsePage;
-import com.tutofox.ecommerce.Model.Response.UserCartResponse;
+import com.tutofox.ecommerce.Model.Response.*;
 import com.tutofox.ecommerce.Repository.*;
 import com.tutofox.ecommerce.Repository.Customer.*;
 import com.tutofox.ecommerce.Service.ProductService;
-import com.tutofox.ecommerce.Service.UserDetailService;
 import com.tutofox.ecommerce.Utils.ProductMapper;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -397,6 +391,20 @@ public class ProductServiceImpl implements ProductService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public ProductResponsePage searchProduct(UserDetails userDetails, String contentSearch) {
+        List<ProductEntity> productEntityList = productCustomerRepository.searchByProductName(contentSearch);
+        List<Integer> productIds = contentBaseCore.calculateContentBasedScore(userRepository.findByEmail(userDetails.getUsername()).get(), productEntityList);
+       List<ProductEntity> productEntities = productCustomerRepository.findByProductIdIn(productIds);
+        List<ProductResponse> productResponses = new ArrayList<>();
+
+        productEntities.forEach(product -> {
+            List<ImageEntity> imageEntities = imageCustomerRepository.getImageByProductId(product.getProductId());
+            productResponses.add(productMapper.convertToResponse(product, imageEntities));
+        });
+        int totalPage = (productEntities.size() % 8) == 0 ? (productEntities.size() / 8) : ((productEntities.size() / 8) +1);
+        return new ProductResponsePage(productResponses, totalPage);
+    }
 
 
     private CartProductEntity saveCartProductEntity(CartProductEntity cartProductEntity, int quantity, CartEntity cart, int productId){

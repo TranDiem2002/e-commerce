@@ -28,4 +28,6 @@ public interface ProductService {
     List<UserCartResponse> removeCartProduct(UserDetails userDetails, int productId);
 
     List<UserCartResponse> getCartUser(UserDetails userDetails);
+
+    ProductResponsePage searchProduct(UserDetails userDetails, String contentSearch);
 }

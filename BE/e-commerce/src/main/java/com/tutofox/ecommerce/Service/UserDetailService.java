@@ -5,6 +5,7 @@ import com.tutofox.ecommerce.Entity.*;
 import com.tutofox.ecommerce.Model.Request.AuthenticationRequest;
 import com.tutofox.ecommerce.Model.Request.UserRequest;
 import com.tutofox.ecommerce.Model.Response.AuthenticationResponse;
+import com.tutofox.ecommerce.Model.Response.UserDetailResponse;
 import com.tutofox.ecommerce.Repository.TokenRepository;
 import com.tutofox.ecommerce.Repository.UserRepository;
 import com.tutofox.ecommerce.Utils.UserMapper;
@@ -12,11 +13,14 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserDetailService {
@@ -72,6 +76,18 @@ public class UserDetailService {
                 .token(jwtToken)
                 .role(user.getRole().name())
                 .build();
+    }
+
+    public UserDetailResponse getInfoUser(UserDetails userDetails){
+        Optional<UserEntity> user = userRepository.findByEmail(userDetails.getUsername());
+        if(!user.isPresent())
+            return null;
+        return userMapper.convertToResponseDetail(user.get());
+    }
+
+    public List<UserDetailResponse> getInfoAllUser(){
+        List<UserEntity> userEntities = userRepository.findAll();
+        return userEntities.stream().map( userEntity -> userMapper.convertToResponseDetail(userEntity)).collect(Collectors.toList());
     }
 
     private void saveUserToken (UserEntity user, String jwt){

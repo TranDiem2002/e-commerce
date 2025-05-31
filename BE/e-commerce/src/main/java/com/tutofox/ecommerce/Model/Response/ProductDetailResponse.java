@@ -27,5 +27,9 @@ public class ProductDetailResponse {
     private String shortDescription;
 
     private String description;
+
+    private int subCtgId;
+
+    private String subCtgName;
     
 }

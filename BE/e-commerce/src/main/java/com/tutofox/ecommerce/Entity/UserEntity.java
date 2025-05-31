@@ -10,7 +10,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 @AllArgsConstructor
@@ -58,11 +57,6 @@ public class UserEntity implements UserDetails {
     @JoinColumn(name = "cartId")
     private CartEntity cartEntity;
 
-    @OneToOne
-    @JoinColumn(name = "purchasedOrderId")
-    private PurchasedOrderEntity purchasedOrderEntity;
-
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(this.getRole().name()));
@@ -96,5 +90,9 @@ public class UserEntity implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public String getName(){
+        return userName;
     }
 }

@@ -9,4 +9,6 @@ public interface ProductCustomerRepository {
     List<ProductEntity> getAllProductBySubCategory(int subCategoryId);
 
     List<ProductEntity> findByProductIdIn(List<Integer> productIds);
+
+    List<ProductEntity> searchByProductName(String contentSearch);
 }

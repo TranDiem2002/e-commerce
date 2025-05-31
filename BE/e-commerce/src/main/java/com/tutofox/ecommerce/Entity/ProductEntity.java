@@ -69,4 +69,5 @@ public class ProductEntity {
     @ManyToMany
     @JoinTable(name = "product_rating", joinColumns = @JoinColumn(name = "productId"), inverseJoinColumns = @JoinColumn(name = "ratingId"))
     private List<Rating> productRatings;
+
 }

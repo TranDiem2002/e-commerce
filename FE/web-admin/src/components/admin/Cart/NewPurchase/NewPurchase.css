@@ -1,0 +1,221 @@
+/* AdminOrdersPage.css */
+.admin-orders-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.admin-orders-container h1 {
+  color: #3e6a13;
+  margin-bottom: 20px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.table-responsive {
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+}
+
+.orders-table th,
+.orders-table td {
+  padding: 12px 15px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.orders-table th {
+  background-color: #eef7e6;
+  color: #3e6a13;
+  font-weight: 600;
+}
+
+.order-id {
+  font-weight: 600;
+  color: #3e6a13;
+}
+
+.product-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.product-thumbnail {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-right: 10px;
+}
+
+.product-name {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.product-price {
+  font-size: 13px;
+  color: #666;
+}
+
+.product-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.total-quantity {
+  font-size: 13px;
+  color: #666;
+  margin-top: 5px;
+}
+
+.order-total {
+  font-weight: 600;
+  color: #3e6a13;
+}
+
+.order-address {
+  max-width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
+.status-badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.status-waiting {
+  background-color: #fff8e1;
+  color: #ffa000;
+}
+
+.status-processing {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-delivered {
+  background-color: #e8f5e9;
+  color: #388e3c;
+}
+
+.status-cancelled {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.btn {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: #3e6a13;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #325410;
+}
+
+.btn-success {
+  background-color: #388e3c;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #2e7d32;
+}
+
+.btn-danger {
+  background-color: #d32f2f;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #b71c1c;
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border-left-color: #3e6a13;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 5px;
+}
+
+.pagination-btn {
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  background-color: white;
+  color: #3e6a13;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.pagination-btn:hover {
+  background-color: #f8f9fa;
+}
+
+.pagination-btn.active {
+  background-color: #3e6a13;
+  color: white;
+  border-color: #3e6a13;
+}
+
+.pagination-btn:disabled {
+  color: #adb5bd;
+  cursor: not-allowed;
+  background-color: #f8f9fa;
+}
+
+.no-orders {
+  text-align: center;
+  padding: 30px;
+  color: #6c757d;
+}

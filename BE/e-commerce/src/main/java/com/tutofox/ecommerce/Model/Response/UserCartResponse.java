@@ -21,4 +21,6 @@ public class UserCartResponse {
     private float originalPrice;
 
     private int quantity;
+
+    private boolean status;
 }

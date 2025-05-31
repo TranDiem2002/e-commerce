@@ -105,7 +105,7 @@ export default function ProductScreen() {
 
       // Use currentPage directly for API call (0-indexed)
       let url = `${API_USER}/products/category/${categoryId}?page=${
-        currentPage - 1
+        currentPage + 1
       }&size=${pageSize}`;
 
       if (subCategoryId) {
@@ -249,11 +249,18 @@ export default function ProductScreen() {
     );
   };
 
+  const handleProductDetail = (productId: number) => {
+    router.push({
+      pathname: "/productDetail",
+      params: { id: productId },
+    });
+  };
+
   // Render a product item
   const renderProductItem = ({ item }: { item: ProductItem }) => (
     <TouchableOpacity
       style={styles.productCard}
-      // onPress={() => router.push(`/product-detail/${item.productId}`)}
+      onPress={() => handleProductDetail(item.productId)}
     >
       <View style={styles.imageContainer}>
         {item.discount > 0 && (

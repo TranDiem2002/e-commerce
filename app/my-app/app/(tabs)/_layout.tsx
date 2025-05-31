@@ -4,11 +4,10 @@ import React from "react";
 import { Platform } from "react-native";
 
 import { HapticTab } from "@/components/HapticTab";
-import { IconSymbol } from "@/components/ui/IconSymbol";
 import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { MaterialIcons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -33,17 +32,51 @@ export default function TabLayout() {
         name="product"
         options={{
           title: "Sản phẩm",
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="menu" size={28} color={color} />
+          tabBarIcon: ({ focused }) => (
+            <MaterialIcons
+              name="menu"
+              size={28}
+              color={focused ? "#3e6a13" : "#666666"}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
-          title: "Search", // Updated title
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="magnifyingglass" color={color} /> // Changed icon to search
+          title: "Tìm kiếm",
+          tabBarIcon: ({ focused }) => (
+            <Ionicons
+              name="search"
+              size={28}
+              color={focused ? "#3e6a13" : "#666666"}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="cart"
+        options={{
+          title: "Giỏ hàng",
+          tabBarIcon: ({ focused }) => (
+            <Ionicons
+              name="cart"
+              size={28}
+              color={focused ? "#3e6a13" : "#666666"}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Tài khoản",
+          tabBarIcon: ({ focused }) => (
+            <Ionicons
+              name="person"
+              size={28}
+              color={focused ? "#3e6a13" : "#666666"}
+            />
           ),
         }}
       />

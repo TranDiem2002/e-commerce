@@ -131,45 +131,31 @@ public class ItemBasedCollaborativeFiltering {
     public List<ProductEntity> recommendProductsItemBased(UserEntity user) {
         List<ProductEntity> userLikedProducts = getUserLikedProducts(user);
         Set<Integer> userProductIds = new HashSet<>();
-        if (userLikedProducts == null){
+        if (userLikedProducts != null){
             userProductIds = userLikedProducts.stream()
                     .map(ProductEntity::getProductId)
-                    .collect(Collectors.toSet());
-        }
-
+                    .collect(Collectors.toSet());}
         // Tìm các sản phẩm tương tự
         Map<Integer, Double> productSimilarityScores = new HashMap<>();
-
         // Lấy tất cả sản phẩm
         List<ProductEntity> allProducts = productRepository.findAll();
-
         // Với mỗi sản phẩm người dùng đã thích
         for (ProductEntity likedProduct : userLikedProducts) {
             // Tính điểm tương đồng với tất cả sản phẩm khác
             for (ProductEntity candidateProduct : allProducts) {
                 // Bỏ qua sản phẩm người dùng đã đánh giá
-                if (userProductIds.contains(candidateProduct.getProductId())) {
-                    continue;
-                }
-
+                if (userProductIds.contains(candidateProduct.getProductId())) {continue;}
                 double similarity = calculateProductSimilarity(likedProduct, candidateProduct);
-
                 // giá trị lớn nhất của độ tương đồng
                 int productId = candidateProduct.getProductId();
                 double currentScore = productSimilarityScores.getOrDefault(productId, 0.0);
-                if (similarity > currentScore) {
-                    productSimilarityScores.put(productId, similarity);
-                }
+                if (similarity > currentScore) {productSimilarityScores.put(productId, similarity);}
             }
         }
-
         // Sắp xếp và lấy N sản phẩm được đề xuất cao nhất
         List<Integer> recommendedProductIds = productSimilarityScores.entrySet().stream()
-                .sorted(Map.Entry.<Integer, Double>comparingByValue().reversed())
-                .limit(5)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-
+                .sorted(Map.Entry.<Integer, Double>comparingByValue().reversed()).limit(5)
+                .map(Map.Entry::getKey).collect(Collectors.toList());
         return productCustomerRepository.findByProductIdIn(recommendedProductIds);
     }
 

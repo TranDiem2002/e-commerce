@@ -1,9 +1,6 @@
 package com.tutofox.ecommerce.Controller;
 
-import com.tutofox.ecommerce.Model.Request.CartProductRequest;
-import com.tutofox.ecommerce.Model.Request.ProductRequest;
-import com.tutofox.ecommerce.Model.Request.SubCategoryRequest;
-import com.tutofox.ecommerce.Model.Request.UserCartRequest;
+import com.tutofox.ecommerce.Model.Request.*;
 import com.tutofox.ecommerce.Model.Response.ProductDetailResponse;
 import com.tutofox.ecommerce.Model.Response.ProductResponse;
 import com.tutofox.ecommerce.Model.Response.ProductResponsePage;
@@ -41,7 +38,7 @@ public class ProductController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @GetMapping("/getAll")
+    @PostMapping("/getAll")
     public ResponseEntity<?> getProductBySubCategory(@RequestBody SubCategoryRequest subCategoryRequest){
         return ResponseEntity.ok(productService.getListBySubCategory(subCategoryRequest));
     }
@@ -87,4 +84,8 @@ public class ProductController {
         return ResponseEntity.ok(productService.getCartUser(userDetails));
     }
 
+    @PostMapping("/searchProduct")
+    public ResponseEntity<?> searchProduct(@AuthenticationPrincipal UserDetails userDetails, @RequestBody SearchProductRequest search){
+        return ResponseEntity.ok(productService.searchProduct(userDetails,search.getProductName()));
+    }
 }

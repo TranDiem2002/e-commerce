@@ -1,7 +1,7 @@
 // app/(tabs)/profile.tsx
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { Picker } from "@react-native-picker/picker";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -511,7 +511,7 @@ export default function ProfileScreen() {
         )}
       </ScrollView>
 
-      {/* Date Picker Modal */}
+      {/* Date Picker Modal
       {showDatePicker && (
         <DateTimePicker
           value={date}
@@ -519,7 +519,7 @@ export default function ProfileScreen() {
           display="default"
           onChange={handleDateChange}
         />
-      )}
+      )} */}
     </SafeAreaView>
   );
 }
@@ -535,8 +535,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 15,
     backgroundColor: "#3e6a13",
-    marginTop: 32,
     justifyContent: "center",
+    marginTop: 32,
   },
   headerTitle: {
     fontSize: 18,

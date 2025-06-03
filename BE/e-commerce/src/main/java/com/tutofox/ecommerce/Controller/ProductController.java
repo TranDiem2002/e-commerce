@@ -51,7 +51,7 @@ public class ProductController {
 
         ProductResponsePage productResponsePage = productService.getHybridRecommendations(userDetails, subCategory, page, size);
         if(productResponsePage == null){
-            return ResponseEntity.ok(productService.getListByPage(userDetails, subCategory, page, size));
+            return ResponseEntity.ok(productService.getHybridRecommendations(userDetails, subCategory, page, size));
         }
         return ResponseEntity.ok(productResponsePage);
     }
@@ -87,5 +87,10 @@ public class ProductController {
     @PostMapping("/searchProduct")
     public ResponseEntity<?> searchProduct(@AuthenticationPrincipal UserDetails userDetails, @RequestBody SearchProductRequest search){
         return ResponseEntity.ok(productService.searchProduct(userDetails,search.getProductName()));
+    }
+
+    @PostMapping("/getRecommend")
+    public ResponseEntity<?> recommendDetail(@AuthenticationPrincipal UserDetails userDetails, @RequestBody CartProductRequest cart){
+        return ResponseEntity.ok(productService.getRecommend(userDetails, cart.getProductId()));
     }
 }

@@ -19,24 +19,29 @@ public class ContentBaseCore {
         this.userSetting = new UserSetting();
     }
 
-    public List<Integer> calculateContentBasedScore(UserEntity userEntity, List<ProductEntity> productEntities){
+    public Map<Integer, Double> calculateContentBasedScore(UserEntity userEntity, List<ProductEntity> productEntities) {
 
         Map<String, Double> userMap = calculateUser(userEntity);
         Map<Integer, Map<String, Double>> productList = calculateProductBySubCategory(productEntities);
 
-        List<Map.Entry<Integer, Double>> scoredProducts = new ArrayList<>();
+        Map<Integer, Double> scoredProducts = new HashMap<>();
         for (Map.Entry<Integer, Map<String, Double>> entry : productList.entrySet()) {
             int productId = entry.getKey();
             Map<String, Double> productVector = entry.getValue();
             double similarity = cosineSimilarity(userMap, productVector);
-            scoredProducts.add(new AbstractMap.SimpleEntry<>(productId, similarity));
+            scoredProducts.put(productId, similarity);
         }
 
-        // Sắp xếp giảm dần theo độ tương đồng
-        return scoredProducts.stream()
-                .sorted((e1, e2) -> Double.compare(e2.getValue(), e1.getValue()))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+        // Trả về Map đã sắp xếp giảm dần theo similarity
+        return scoredProducts.entrySet()
+                .stream()
+                .sorted(Map.Entry.<Integer, Double>comparingByValue().reversed())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1, // merge function nếu có key trùng, không xảy ra trong trường hợp này
+                        LinkedHashMap::new // để giữ thứ tự sắp xếp
+                ));
     }
 
     public static double cosineSimilarity(Map<String, Double> user, Map<String, Double> product) {

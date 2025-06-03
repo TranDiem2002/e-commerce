@@ -1,14 +1,39 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { API_USER } from "../../links";
 
+interface RecommendedProduct {
+  productId: number;
+  productName: string;
+  imageUrl: string;
+  price: number;
+  originalPrice: number;
+  discount: number;
+  specialPrice: boolean;
+  ratingsAvg: number;
+  reviewCount: number;
+  new: boolean;
+}
+
+interface ProductReview {
+  ratingId: number;
+  userId: number;
+  rating: number;
+  content: string;
+}
+
 const ProductDetail: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
   const [product, setProduct] = useState<any>(null);
   const [mainImage, setMainImage] = useState<string | null>(null);
+  const [recommendedProducts, setRecommendedProducts] = useState<
+    RecommendedProduct[]
+  >([]);
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -34,13 +59,128 @@ const ProductDetail: React.FC = () => {
   }, [productId]);
 
   useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        };
+
+        const response = await axios.post(
+          `${API_USER}/product/getRecommend`,
+          { productId: productId },
+          config
+        );
+
+        // Sửa lỗi: kiểm tra response.data là mảng
+        if (response.data && Array.isArray(response.data)) {
+          setRecommendedProducts(response.data);
+        } else if (response.data && response.data.productResponses) {
+          setRecommendedProducts(response.data.productResponses);
+        }
+      } catch (error) {
+        console.error("Error fetching recommended products:", error);
+      }
+    };
+
+    if (productId) {
+      fetchRecommendations();
+    }
+  }, [productId]);
+
+  // Fetch reviews for the product
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        setReviewsLoading(true);
+        const token = localStorage.getItem("token");
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+
+        const response = await axios.get(
+          `${API_USER}/product/review/${productId}`,
+          config
+        );
+
+        if (response.data && Array.isArray(response.data)) {
+          setReviews(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+        setReviews([]);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+
+    if (productId) {
+      fetchReviews();
+    }
+  }, [productId]);
+
+  useEffect(() => {
     if (product && product.imageUrl.length > 0) {
       setMainImage(product.imageUrl[0]);
     }
   }, [product]);
 
+  // Function to render star rating
+  const renderStarRating = (rating: number, size: string = "16px") => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <span
+          key={i}
+          style={{
+            color: i <= rating ? "#f39c12" : "#ddd",
+            fontSize: size,
+            marginRight: "2px",
+          }}
+        >
+          ★
+        </span>
+      );
+    }
+    return stars;
+  };
+
+  // Function to calculate average rating
+  const calculateAverageRating = () => {
+    if (reviews.length === 0) return 0;
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    return (totalRating / reviews.length).toFixed(1);
+  };
+
+  // Function to get rating distribution
+  const getRatingDistribution = () => {
+    const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    reviews.forEach((review) => {
+      distribution[review.rating as keyof typeof distribution]++;
+    });
+    return distribution;
+  };
+
   if (!product) {
-    return <div>Loading...</div>;
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "50vh",
+          fontSize: "18px",
+          color: "#4c503d",
+        }}
+      >
+        Đang tải thông tin sản phẩm...
+      </div>
+    );
   }
 
   const formatDescription = (description: string) => {
@@ -110,7 +250,7 @@ const ProductDetail: React.FC = () => {
       const config = {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json", // Keeping this as it's needed for POST
+          "Content-Type": "application/json",
         },
       };
 
@@ -126,6 +266,9 @@ const ProductDetail: React.FC = () => {
       alert("Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng.");
     }
   };
+
+  const averageRating = calculateAverageRating();
+  const ratingDistribution = getRatingDistribution();
 
   return (
     <>
@@ -151,7 +294,7 @@ const ProductDetail: React.FC = () => {
           {/* Hình ảnh sản phẩm chính */}
           <div style={{ flex: 1, padding: "20px" }}>
             <img
-              src={mainImage} // Hiển thị hình ảnh chính
+              src={mainImage}
               alt={product.productName}
               style={{
                 width: "100%",
@@ -180,7 +323,7 @@ const ProductDetail: React.FC = () => {
                     borderRadius: "4px",
                     border: mainImage === img ? "2px solid #4c503d" : "none",
                   }}
-                  onClick={() => setMainImage(img)} // Thay đổi hình ảnh chính khi click
+                  onClick={() => setMainImage(img)}
                 />
               ))}
             </div>
@@ -205,6 +348,41 @@ const ProductDetail: React.FC = () => {
             <div className="product-title2" style={{ color: "#3e6806" }}>
               Làm sạch da - Dịu nhẹ
             </div>
+
+            {/* Hiển thị đánh giá trung bình */}
+            {reviews.length > 0 && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  marginTop: "10px",
+                  marginBottom: "15px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    marginRight: "15px",
+                  }}
+                >
+                  {renderStarRating(parseFloat(averageRating), "18px")}
+                  <span
+                    style={{
+                      marginLeft: "8px",
+                      fontSize: "16px",
+                      fontWeight: "500",
+                      color: "#4c503d",
+                    }}
+                  >
+                    {averageRating}
+                  </span>
+                </div>
+                <span style={{ fontSize: "14px", color: "#666" }}>
+                  ({reviews.length} đánh giá)
+                </span>
+              </div>
+            )}
 
             <div className="product-price-area">
               <span className="current-price">
@@ -246,7 +424,6 @@ const ProductDetail: React.FC = () => {
               </div>
             </div>
 
-            {/* <p>{product.shortDescription}</p> */}
             <div style={{ display: "flex", alignItems: "center" }}>
               <button
                 style={{
@@ -410,6 +587,445 @@ const ProductDetail: React.FC = () => {
         >
           {product.description}
         </div>
+      </div>
+
+      {/* Phần Sản phẩm gợi ý */}
+      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "20px" }}>
+        <h2
+          className="product-section-title"
+          style={{
+            color: "#4c503d",
+            display: "flex",
+            alignItems: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <img
+            src="https://comem.vn/images/collections/flower.png"
+            alt="flower decoration"
+            style={{ marginRight: "10px" }}
+          />
+          Sản phẩm gợi ý cho bạn
+        </h2>
+
+        {/* Thiết lập flex container cho các sản phẩm gợi ý trên cùng một hàng */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: "10px",
+            marginBottom: "40px",
+            flexWrap: "nowrap",
+            overflowX: "auto",
+            paddingBottom: "5px",
+          }}
+        >
+          {recommendedProducts.map((item) => (
+            <Link
+              to={`/product/${item.productId}`}
+              key={item.productId}
+              style={{
+                textDecoration: "none",
+                color: "inherit",
+                flex: "0 0 18%",
+                minWidth: "150px",
+              }}
+            >
+              <div
+                style={{
+                  border: "1px solid #f0f0f0",
+                  borderRadius: "8px",
+                  overflow: "hidden",
+                  transition: "transform 0.2s, box-shadow 0.2s",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = "translateY(-5px)";
+                  e.currentTarget.style.boxShadow =
+                    "0 5px 15px rgba(0,0,0,0.1)";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                <div style={{ position: "relative", paddingTop: "100%" }}>
+                  <img
+                    src={item.imageUrl}
+                    alt={item.productName}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                  {item.discount > 0 && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "5px",
+                        right: "5px",
+                        backgroundColor: "#e74c3c",
+                        color: "white",
+                        padding: "2px 6px",
+                        borderRadius: "4px",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      -{item.discount}%
+                    </div>
+                  )}
+                  {item.new && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "5px",
+                        left: "5px",
+                        backgroundColor: "#2ecc71",
+                        color: "white",
+                        padding: "2px 6px",
+                        borderRadius: "4px",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Mới
+                    </div>
+                  )}
+                </div>
+                <div
+                  style={{
+                    padding: "8px",
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: "12px",
+                      margin: "0 0 6px 0",
+                      fontWeight: 500,
+                      color: "#4c503d",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      lineHeight: "1.2",
+                    }}
+                  >
+                    {item.productName}
+                  </h3>
+                  <div style={{ marginTop: "auto" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "baseline",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#e67e22",
+                          fontWeight: "bold",
+                          fontSize: "12px",
+                        }}
+                      >
+                        {item.price.toLocaleString()}đ
+                      </span>
+                      {item.price !== item.originalPrice && (
+                        <span
+                          style={{
+                            color: "#999",
+                            textDecoration: "line-through",
+                            fontSize: "10px",
+                            marginLeft: "3px",
+                          }}
+                        >
+                          {item.originalPrice.toLocaleString()}đ
+                        </span>
+                      )}
+                    </div>
+                    {item.ratingsAvg > 0 && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          marginTop: "3px",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            color: "#f39c12",
+                            marginRight: "2px",
+                          }}
+                        >
+                          ★
+                        </span>
+                        <span style={{ fontSize: "10px", color: "#666" }}>
+                          {item.ratingsAvg.toFixed(1)} ({item.reviewCount})
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Phần Đánh giá sản phẩm */}
+      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "20px" }}>
+        <h2
+          className="product-section-title"
+          style={{
+            color: "#4c503d",
+            display: "flex",
+            alignItems: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <img
+            src="https://comem.vn/images/collections/flower.png"
+            alt="flower decoration"
+            style={{ marginRight: "10px" }}
+          />
+          Đánh giá sản phẩm
+        </h2>
+
+        {reviewsLoading ? (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100px",
+              fontSize: "16px",
+              color: "#666",
+            }}
+          >
+            Đang tải đánh giá...
+          </div>
+        ) : reviews.length === 0 ? (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "40px 20px",
+              backgroundColor: "#f9f9f9",
+              borderRadius: "8px",
+              color: "#666",
+            }}
+          >
+            <p style={{ fontSize: "16px", margin: "0" }}>
+              Chưa có đánh giá nào cho sản phẩm này.
+            </p>
+          </div>
+        ) : (
+          <div>
+            {/* Tổng quan đánh giá */}
+            <div
+              style={{
+                backgroundColor: "#f9f9f9",
+                padding: "20px",
+                borderRadius: "8px",
+                marginBottom: "20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ textAlign: "center", marginRight: "30px" }}>
+                  <div
+                    style={{
+                      fontSize: "36px",
+                      fontWeight: "bold",
+                      color: "#4c503d",
+                    }}
+                  >
+                    {averageRating}
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      marginBottom: "5px",
+                    }}
+                  >
+                    {renderStarRating(parseFloat(averageRating), "20px")}
+                  </div>
+                  <div style={{ fontSize: "14px", color: "#666" }}>
+                    {reviews.length} đánh giá
+                  </div>
+                </div>
+
+                {/* Phân bố đánh giá */}
+                <div style={{ flex: 1 }}>
+                  {[5, 4, 3, 2, 1].map((star) => (
+                    <div
+                      key={star}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        marginBottom: "5px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          minWidth: "15px",
+                          fontSize: "14px",
+                          color: "#666",
+                        }}
+                      >
+                        {star}
+                      </span>
+                      <span
+                        style={{
+                          color: "#f39c12",
+                          marginLeft: "5px",
+                          marginRight: "10px",
+                        }}
+                      >
+                        ★
+                      </span>
+                      <div
+                        style={{
+                          flex: 1,
+                          height: "8px",
+                          backgroundColor: "#e0e0e0",
+                          borderRadius: "4px",
+                          marginRight: "10px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: "100%",
+                            backgroundColor: "#f39c12",
+                            borderRadius: "4px",
+                            width: `${
+                              reviews.length > 0
+                                ? (ratingDistribution[
+                                    star as keyof typeof ratingDistribution
+                                  ] /
+                                    reviews.length) *
+                                  100
+                                : 0
+                            }%`,
+                          }}
+                        ></div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: "14px",
+                          color: "#666",
+                          minWidth: "30px",
+                        }}
+                      >
+                        {
+                          ratingDistribution[
+                            star as keyof typeof ratingDistribution
+                          ]
+                        }
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Danh sách đánh giá */}
+            <div>
+              {reviews.map((review, index) => (
+                <div
+                  key={review.ratingId}
+                  style={{
+                    border: "1px solid #f0f0f0",
+                    borderRadius: "8px",
+                    padding: "20px",
+                    marginBottom: "15px",
+                    backgroundColor: "#fff",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        backgroundColor: "#4c503d",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "white",
+                        fontWeight: "bold",
+                        marginRight: "15px",
+                      }}
+                    >
+                      {`U${review.userId}`}
+                    </div>
+                    <div>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          marginBottom: "5px",
+                        }}
+                      >
+                        {renderStarRating(review.rating, "16px")}
+                        <span
+                          style={{
+                            marginLeft: "8px",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                            color: "#4c503d",
+                          }}
+                        >
+                          {review.rating}/5
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: "#999",
+                        }}
+                      >
+                        Người dùng #{review.userId}
+                      </div>
+                    </div>
+                  </div>
+
+                  {review.content && (
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        lineHeight: "1.5",
+                        color: "#333",
+                        marginLeft: "55px",
+                      }}
+                    >
+                      {review.content}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <Footer />

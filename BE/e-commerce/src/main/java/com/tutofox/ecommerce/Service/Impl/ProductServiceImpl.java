@@ -1,6 +1,7 @@
 package com.tutofox.ecommerce.Service.Impl;
 
 import com.tutofox.ecommerce.Caculator.ContentBaseCore;
+import com.tutofox.ecommerce.Caculator.ItemBasedCollaborativeFiltering;
 import com.tutofox.ecommerce.Caculator.UserBasedCollaborativeFiltering;
 import com.tutofox.ecommerce.Entity.*;
 import com.tutofox.ecommerce.Model.Request.ProductRequest;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.security.Key;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,6 +66,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private UserBasedCollaborativeFiltering userBased;
+
+    @Autowired
+    private ItemBasedCollaborativeFiltering itemBased;
 
     @Autowired
     private UserRepository userRepository;
@@ -237,49 +242,101 @@ public class ProductServiceImpl implements ProductService {
         return productResponses;
     }
 
+//    @Override
+//    public ProductResponsePage getListByPage(UserDetails userDetail, int subCategoryId, int page, int sizePage) {
+//       Optional<UserEntity> user = userRepository.findByEmail(userDetail.getUsername());
+//        List<ProductResponse> result = new ArrayList<>();
+//        List<ProductEntity> productEntities = productCustomerRepository.getAllProductBySubCategory(subCategoryId);
+//        if(page == 1){
+//            productPage = new ArrayList<>();
+//            List<Integer> productList = contentBaseCore.calculateContentBasedScore(user.get(), productEntities);
+//            Map<Integer, ProductEntity> productMap = new HashMap<>();
+//            for (ProductEntity product : productEntities) {
+//                productMap.put(product.getProductId(), product);
+//            }
+//
+//            productList.forEach(productId -> {
+//                ProductEntity productEntity = productMap.get(productId);
+//                List<ImageEntity> imageEntities = imageCustomerRepository.getImageByProductId(productId);
+//                productPage.add(productMapper.convertToResponse(productEntity,imageEntities));
+//            });
+//        }
+//        for(int i = (sizePage*(page -1) == 0 ? sizePage*(page -1): sizePage*(page -1)-1); i < productPage.size(); i++ ){
+//            if(i >= (sizePage*(page -1) - 1) && i <= ((sizePage*page)-1)){
+//                result.add(productPage.get(i));
+//            }
+//        }
+//        int totalPage = (productEntities.size() % sizePage) == 0 ? (productEntities.size() / sizePage) : ((productEntities.size() / sizePage) +1);
+//        return new ProductResponsePage(result, totalPage);
+//    }
+
     @Override
-    public ProductResponsePage getListByPage(UserDetails userDetail, int subCategoryId, int page, int sizePage) {
-       Optional<UserEntity> user = userRepository.findByEmail(userDetail.getUsername());
+    public ProductResponsePage getHybridRecommendations(UserDetails userDetails, int subCategoryId, int page, int sizePage) {
         List<ProductResponse> result = new ArrayList<>();
-        List<ProductEntity> productEntities = productCustomerRepository.getAllProductBySubCategory(subCategoryId);
-        if(page == 1){
+        List<ProductEntity> productEntities = new ArrayList<>();
+
+        if (page == 1){
             productPage = new ArrayList<>();
-            List<Integer> productList = contentBaseCore.calculateContentBasedScore(user.get(), productEntities);
-            Map<Integer, ProductEntity> productMap = new HashMap<>();
-            for (ProductEntity product : productEntities) {
-                productMap.put(product.getProductId(), product);
+            Map<Integer, Double> hybridScores = new HashMap<>();
+
+            Optional<UserEntity> user = userRepository.findByEmail(userDetails.getUsername());
+            UserEntity userEntity = user.get();
+
+            List<ProductEntity> productEntityList = productRepository.findAll().stream()
+                    .filter(product -> product.getSubCategory().getSubCategoryId() == subCategoryId)
+                    .collect(Collectors.toList());
+
+            Map<Integer, Double> contentBased = contentBaseCore.calculateContentBasedScore(userEntity, productEntityList);
+            Map<Integer, Double> userBasedCore =  userBased.recommendProductsUserBased(user.get(), subCategoryId);
+            Map<Integer, Double> itemBasedCore = itemBased.recommendProductsItemBased(user.get(), subCategoryId);
+
+            // Tập hợp tất cả productId từ ba map
+            Set<Integer> allProductIds = new HashSet<>();
+            allProductIds.addAll(contentBased.keySet());
+            allProductIds.addAll(userBasedCore.keySet());
+            allProductIds.addAll(itemBasedCore.keySet());
+
+            // Tính điểm tổng hợp cho mỗi sản phẩm
+            for (Integer productId : allProductIds) {
+                // Lấy điểm từ mỗi hệ gợi ý (mặc định là 0 nếu không có)
+                double contentScore = contentBased.getOrDefault(productId, 0.0);
+                double userScore = userBasedCore.getOrDefault(productId, 0.0);
+                double itemScore = itemBasedCore.getOrDefault(productId, 0.0);
+
+                // Tính điểm tổng hợp theo trọng số
+                double combinedScore =
+                        contentScore * 0.5 +
+                                userScore * 0.2 +
+                                itemScore * 0.3;
+
+                // Thêm vào map kết quả
+                hybridScores.put(productId, combinedScore);
             }
 
-            productList.forEach(productId -> {
-                ProductEntity productEntity = productMap.get(productId);
-                List<ImageEntity> imageEntities = imageCustomerRepository.getImageByProductId(productId);
-                productPage.add(productMapper.convertToResponse(productEntity,imageEntities));
-            });
+//            hybridScores.forEach((key, value) -> {
+//                System.out.println("key: " + key + " value: " + value);
+//            });
+
+            productEntities.addAll(hybridScores.entrySet().stream()
+                    .sorted(Map.Entry.<Integer, Double>comparingByValue().reversed())
+                    .map(entry -> productRepository.findById(entry.getKey()).orElse(null))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList()));
         }
+
+        productEntities.forEach(product -> {
+            List<ImageEntity> imageEntities = imageCustomerRepository.getImageByProductId(product.getProductId());
+            productPage.add(productMapper.convertToResponse(product, imageEntities));
+        });
+
         for(int i = (sizePage*(page -1) == 0 ? sizePage*(page -1): sizePage*(page -1)-1); i < productPage.size(); i++ ){
             if(i >= (sizePage*(page -1) - 1) && i <= ((sizePage*page)-1)){
                 result.add(productPage.get(i));
             }
         }
-        int totalPage = (productEntities.size() % sizePage) == 0 ? (productEntities.size() / sizePage) : ((productEntities.size() / sizePage) +1);
+
+        int totalPage = (productPage.size() % sizePage) == 0 ? (productPage.size() / sizePage) : ((productPage.size() / sizePage) +1);
         return new ProductResponsePage(result, totalPage);
-    }
-
-    @Override
-    public ProductResponsePage getHybridRecommendations(UserDetails userDetails, int subCategoryId, int page, int sizePage) {
-        Optional<UserEntity> user = userRepository.findByEmail(userDetails.getUsername());
-        List<ProductEntity> productEntities = userBased.recommendProductsUserBased(user.get(), subCategoryId);
-        if (productEntities.isEmpty())
-            return null;
-        List<ProductResponse> productResponses = new ArrayList<>();
-
-        productEntities.forEach(product -> {
-            List<ImageEntity> imageEntities = imageCustomerRepository.getImageByProductId(product.getProductId());
-            productResponses.add(productMapper.convertToResponse(product, imageEntities));
-        });
-
-        int totalPage = (productEntities.size() % sizePage) == 0 ? (productEntities.size() / sizePage) : ((productEntities.size() / sizePage) +1);
-        return new ProductResponsePage(productResponses, totalPage);
     }
 
     @Override
@@ -394,8 +451,8 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponsePage searchProduct(UserDetails userDetails, String contentSearch) {
         List<ProductEntity> productEntityList = productCustomerRepository.searchByProductName(contentSearch);
-        List<Integer> productIds = contentBaseCore.calculateContentBasedScore(userRepository.findByEmail(userDetails.getUsername()).get(), productEntityList);
-       List<ProductEntity> productEntities = productCustomerRepository.findByProductIdIn(productIds);
+        Map<Integer, Double> productIds = contentBaseCore.calculateContentBasedScore(userRepository.findByEmail(userDetails.getUsername()).get(), productEntityList);
+       List<ProductEntity> productEntities = productCustomerRepository.findByProductIdIn(new ArrayList<>(productIds.keySet()));
         List<ProductResponse> productResponses = new ArrayList<>();
 
         productEntities.forEach(product -> {
@@ -404,6 +461,36 @@ public class ProductServiceImpl implements ProductService {
         });
         int totalPage = (productEntities.size() % 8) == 0 ? (productEntities.size() / 8) : ((productEntities.size() / 8) +1);
         return new ProductResponsePage(productResponses, totalPage);
+    }
+
+    @Override
+    public List<ProductResponse> getRecommend(UserDetails userDetails, int productId) {
+        List<ProductResponse> productResponses = new ArrayList<>();
+
+        UserEntity userEntity = userRepository.findByEmail(userDetails.getUsername()).get();
+        List<ProductEntity> productEntities = productRepository.findAll().stream()
+                .filter(x -> x.getProductId() != productId).collect(Collectors.toList());
+        Map<Integer, Double> contentBase = contentBaseCore.calculateContentBasedScore(userEntity, productEntities);
+
+        Map<Integer, Double> top5ContentBase = contentBase.entrySet().stream()
+                .sorted(Map.Entry.<Integer, Double>comparingByValue().reversed())
+                .limit(5)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
+
+        List<Integer> productIds = new ArrayList<>(top5ContentBase.keySet());
+        List<ProductEntity> productEntityList = productCustomerRepository.findByProductIdIn(productIds);
+
+        productEntityList.forEach(product -> {
+            List<ImageEntity> imageEntities = imageCustomerRepository.getImageByProductId(product.getProductId());
+            productResponses.add(productMapper.convertToResponse(product, imageEntities));
+        });
+
+        return productResponses;
     }
 
 

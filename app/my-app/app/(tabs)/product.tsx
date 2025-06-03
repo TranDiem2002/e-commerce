@@ -104,7 +104,7 @@ export default function ProductScreen() {
       setShowPagination(false); // Hide pagination while loading
 
       // Use currentPage directly for API call (0-indexed)
-      let url = `${API_USER}/products/category/${categoryId}?page=${
+      let url = `${API_USER}/product/subCategory/1?page=${
         currentPage + 1
       }&size=${pageSize}`;
 
@@ -308,7 +308,7 @@ export default function ProductScreen() {
     } else if (categoryName) {
       return categoryName;
     } else {
-      return "TẤT CẢ SẢN PHẨM";
+      return "Tẩy trang-rửa mặt";
     }
   };
 

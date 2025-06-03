@@ -27,7 +27,19 @@ public class ItemBasedCollaborativeFiltering {
     @Autowired
     private ContentBaseCore contentBaseCore;
 
-    public double calculateProductSimilarity(ProductEntity product1, ProductEntity product2){
+    // Cache để lưu trữ kết quả tính toán tương đồng giữa các sản phẩm
+    private Map<String, Double> similarityCache = new HashMap<>();
+
+    //Tính độ tương đồng tổng thể giữa hai sản phẩm
+    public double calculateProductSimilarity(ProductEntity product1, ProductEntity product2) {
+        // Tạo khóa cache để tránh tính toán lặp lại
+        String cacheKey = getCacheKey(product1.getProductId(), product2.getProductId());
+
+        // Kiểm tra cache
+        if (similarityCache.containsKey(cacheKey)) {
+            return similarityCache.get(cacheKey);
+        }
+
         // 1. Tương đồng về thành phần (40%)
         double ingredientSimilarity = calculateIngredientSimilarity(product1, product2);
 
@@ -41,14 +53,25 @@ public class ItemBasedCollaborativeFiltering {
         double categorySimilarity = calculateCategorySimilarity(product1, product2);
 
         // Kết hợp các điểm tương đồng với trọng số
-        return (ingredientSimilarity * 0.4) +
+        double similarity = (ingredientSimilarity * 0.4) +
                 (featureSimilarity * 0.3) +
                 (skinTargetSimilarity * 0.2) +
                 (categorySimilarity * 0.1);
+
+        // Lưu kết quả vào cache
+        similarityCache.put(cacheKey, similarity);
+
+        return similarity;
     }
 
-    //tính độ tương đồng của thành phần
-    public double calculateIngredientSimilarity(ProductEntity product1, ProductEntity product2){
+    // Tạo khóa duy nhất cho cache similarity
+    private String getCacheKey(int id1, int id2) {
+        // Đảm bảo thứ tự id không ảnh hưởng đến khóa
+        return id1 < id2 ? id1 + "_" + id2 : id2 + "_" + id1;
+    }
+
+    // Tính độ tương đồng của thành phần
+    public double calculateIngredientSimilarity(ProductEntity product1, ProductEntity product2) {
         Set<Integer> ingredient1 = product1.getIngredientEntities().stream()
                 .map(ingredientEntity -> ingredientEntity.getIngredientId())
                 .collect(Collectors.toSet());
@@ -56,43 +79,46 @@ public class ItemBasedCollaborativeFiltering {
         Set<Integer> ingredient2 = product2.getIngredientEntities().stream()
                 .map(ingredientEntity -> ingredientEntity.getIngredientId())
                 .collect(Collectors.toSet());
+
         return calculateJaccardSimilarity(ingredient1, ingredient2);
     }
 
-    //tương đồng về công dụng
-    public double calculateFeatureSimilarity(ProductEntity product1, ProductEntity product2){
+    // Tính tương đồng về công dụng
+    public double calculateFeatureSimilarity(ProductEntity product1, ProductEntity product2) {
         Set<Integer> feature1 = product1.getFeatureEntities().stream()
                 .map(featureEntity -> featureEntity.getFeatureId())
                 .collect(Collectors.toSet());
+
         Set<Integer> feature2 = product2.getFeatureEntities().stream()
                 .map(featureEntity -> featureEntity.getFeatureId())
                 .collect(Collectors.toSet());
+
         return calculateJaccardSimilarity(feature1, feature2);
     }
 
-    //tương đồng về loại da và vấn đề về da
-    public double calculateSkinTargetSimilarity(ProductEntity product1, ProductEntity product2){
+    // Tính tương đồng về loại da và vấn đề về da
+    public double calculateSkinTargetSimilarity(ProductEntity product1, ProductEntity product2) {
         Set<Integer> skinConcern1 = product1.getSkinConcernEntities().stream()
-                .map(skinConcernEntity ->  skinConcernEntity.getConcernId())
+                .map(skinConcernEntity -> skinConcernEntity.getConcernId())
                 .collect(Collectors.toSet());
 
         Set<Integer> skinType1 = product1.getSkinTypeEntities().stream()
-                .map(skinTypeEntity ->  skinTypeEntity.getSkinTypeId())
+                .map(skinTypeEntity -> skinTypeEntity.getSkinTypeId())
                 .collect(Collectors.toSet());
 
         Set<Integer> skinConcern2 = product2.getSkinConcernEntities().stream()
-                .map(skinConcernEntity ->  skinConcernEntity.getConcernId())
+                .map(skinConcernEntity -> skinConcernEntity.getConcernId())
                 .collect(Collectors.toSet());
 
         Set<Integer> skinType2 = product2.getSkinTypeEntities().stream()
-                .map(skinTypeEntity ->  skinTypeEntity.getSkinTypeId())
+                .map(skinTypeEntity -> skinTypeEntity.getSkinTypeId())
                 .collect(Collectors.toSet());
-        return calculateJaccardSimilarity(skinConcern1, skinConcern2) * 0.5 + calculateJaccardSimilarity(skinType1, skinType2)*0.5;
+
+        return calculateJaccardSimilarity(skinConcern1, skinConcern2) * 0.5 +
+                calculateJaccardSimilarity(skinType1, skinType2) * 0.5;
     }
 
-    /**
-     * Tính tương đồng về danh mục
-     */
+    // Tính tương đồng về danh mục
     private double calculateCategorySimilarity(ProductEntity product1, ProductEntity product2) {
         // So sánh danh mục con
         boolean sameSubCategory = product1.getSubCategory().getSubCategoryId() ==
@@ -111,68 +137,110 @@ public class ItemBasedCollaborativeFiltering {
         }
     }
 
-    // tính độ tương dồng
+    // Tính độ tương đồng Jaccard giữa hai tập hợp
     private <T> double calculateJaccardSimilarity(Set<T> set1, Set<T> set2) {
         if (set1.isEmpty() && set2.isEmpty()) {
             return 1.0; // Hai tập rỗng được coi là giống nhau
         }
 
-        // sẽ lấy tất cả các vấn đề về da của cả 2 người dùng
+        // Tạo union (tập hợp của cả hai)
         Set<T> union = new HashSet<>(set1);
         union.addAll(set2);
 
-        // lấy ván đề về da giống nhau của cả 2 người dùng
+        // Tạo intersection (phần chung của cả hai)
         Set<T> intersection = new HashSet<>(set1);
         intersection.retainAll(set2);
 
         return (double) intersection.size() / union.size();
     }
 
-    public List<ProductEntity> recommendProductsItemBased(UserEntity user) {
+     // Đề xuất sản phẩm dựa trên phương pháp Item-Based CF
+    public Map<Integer, Double> recommendProductsItemBased(UserEntity user, int subCategoryId) {
+        // Lấy sản phẩm người dùng đã thích
         List<ProductEntity> userLikedProducts = getUserLikedProducts(user);
-        Set<Integer> userProductIds = new HashSet<>();
-        if (userLikedProducts != null){
-            userProductIds = userLikedProducts.stream()
-                    .map(ProductEntity::getProductId)
-                    .collect(Collectors.toSet());}
-        // Tìm các sản phẩm tương tự
+
+        // Nếu người dùng chưa thích sản phẩm nào
+        if (userLikedProducts == null || userLikedProducts.isEmpty()) {
+           return new HashMap<>();
+        }
+
+        // Tạo tập hợp ID sản phẩm người dùng đã thích để tìm kiếm nhanh
+        Set<Integer> userProductIds = userLikedProducts.stream()
+                .map(ProductEntity::getProductId)
+                .collect(Collectors.toSet());
+
+        // Map để lưu điểm tương đồng cho mỗi sản phẩm
         Map<Integer, Double> productSimilarityScores = new HashMap<>();
-        // Lấy tất cả sản phẩm
-        List<ProductEntity> allProducts = productRepository.findAll();
+
+        // Lấy tất cả sản phẩm - hiệu quả hơn nếu chỉ lấy sản phẩm chưa được đánh giá
+        List<ProductEntity> candidateProducts = productRepository.findAll().stream()
+                .filter(p ->
+                        !userProductIds.contains(p.getProductId()) &&
+                                p.getSubCategory().getSubCategoryId() == subCategoryId
+                )
+                .collect(Collectors.toList());
+
+
         // Với mỗi sản phẩm người dùng đã thích
         for (ProductEntity likedProduct : userLikedProducts) {
-            // Tính điểm tương đồng với tất cả sản phẩm khác
-            for (ProductEntity candidateProduct : allProducts) {
-                // Bỏ qua sản phẩm người dùng đã đánh giá
-                if (userProductIds.contains(candidateProduct.getProductId())) {continue;}
+            // Tính điểm tương đồng với các sản phẩm chưa đánh giá
+            for (ProductEntity candidateProduct : candidateProducts) {
                 double similarity = calculateProductSimilarity(likedProduct, candidateProduct);
-                // giá trị lớn nhất của độ tương đồng
+
+                // Cập nhật điểm số cao nhất cho mỗi sản phẩm
                 int productId = candidateProduct.getProductId();
                 double currentScore = productSimilarityScores.getOrDefault(productId, 0.0);
-                if (similarity > currentScore) {productSimilarityScores.put(productId, similarity);}
+                if (similarity > currentScore) {
+                    productSimilarityScores.put(productId, similarity);
+                }
             }
         }
-        // Sắp xếp và lấy N sản phẩm được đề xuất cao nhất
-        List<Integer> recommendedProductIds = productSimilarityScores.entrySet().stream()
-                .sorted(Map.Entry.<Integer, Double>comparingByValue().reversed()).limit(5)
-                .map(Map.Entry::getKey).collect(Collectors.toList());
-        return productCustomerRepository.findByProductIdIn(recommendedProductIds);
+
+        // Nếu không có sản phẩm gợi ý, trả về danh sách rỗng
+        if (productSimilarityScores.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        // Sắp xếp
+        LinkedHashMap<Integer, Double> sortedProductSimilar = productSimilarityScores.entrySet()
+                .stream()
+                .sorted(Map.Entry.<Integer, Double>comparingByValue().reversed()) // sắp theo value giảm dần
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new // giữ nguyên thứ tự sắp xếp
+                ));
+
+        return sortedProductSimilar;
     }
 
-    public List<ProductEntity> getUserLikedProducts(UserEntity user){
+    //Lấy sản phẩm mà người dùng đã đánh giá cao (thích)
+    public List<ProductEntity> getUserLikedProducts(UserEntity user) {
+        if (user == null) {
+            return Collections.emptyList();
+        }
+
         List<Integer> productIds = new ArrayList<>();
 
+        // Lấy các đánh giá cao từ người dùng (> 3 điểm)
         List<Rating> ratings = productRating.getByUserId(user.getUserId()).stream()
                 .filter(rating -> rating.getRating() > 3)
                 .collect(Collectors.toList());
-        for(Rating rating : ratings){
+
+        // Thu thập ID sản phẩm từ đánh giá
+        for (Rating rating : ratings) {
             Optional<Integer> productId = productRating.getProductByRatingId(rating.getRatingId());
-            if (productId.isPresent()){
+            if (productId.isPresent()) {
                 productIds.add(productId.get());
             }
         }
-        if (productIds.isEmpty())
-            return null;
+
+        // Trả về danh sách rỗng nếu không có sản phẩm
+        if (productIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         return productCustomerRepository.findByProductIdIn(productIds);
     }
 }

@@ -15,7 +15,7 @@ public interface ProductService {
 
     List<ProductResponse> getListBySubCategory(SubCategoryRequest subCategoryRequest);
 
-    ProductResponsePage getListByPage(UserDetails userDetails, int subCategoryId, int page, int sizePage);
+//    ProductResponsePage getListByPage(UserDetails userDetails, int subCategoryId, int page, int sizePage);
 
     ProductResponsePage getHybridRecommendations(UserDetails userDetails, int subCategoryId, int page, int sizePage);
 
@@ -30,4 +30,6 @@ public interface ProductService {
     List<UserCartResponse> getCartUser(UserDetails userDetails);
 
     ProductResponsePage searchProduct(UserDetails userDetails, String contentSearch);
+
+    List<ProductResponse> getRecommend(UserDetails userDetails, int productId);
 }

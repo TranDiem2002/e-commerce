@@ -23,11 +23,11 @@ public class UserRequest {
 
     private String password;
 
-    private String birthday;
+    private String phone;
 
     private String  gender;
 
-    private String skinType;
+    private List<String> skinType;
 
     private List<String> skinConcerns;
 }

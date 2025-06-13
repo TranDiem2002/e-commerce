@@ -1,6 +1,7 @@
 package com.tutofox.ecommerce.Controller;
 
 import com.tutofox.ecommerce.Model.Request.AuthenticationRequest;
+import com.tutofox.ecommerce.Model.Request.UserInfoRequest;
 import com.tutofox.ecommerce.Model.Request.UserRequest;
 import com.tutofox.ecommerce.Model.Response.AuthenticationResponse;
 import com.tutofox.ecommerce.Service.UserDetailService;
@@ -36,6 +37,12 @@ public class UserController {
     public ResponseEntity<AuthenticationResponse> login(@RequestBody  AuthenticationRequest auth){
         AuthenticationResponse response = userDetailsService.authentication(auth);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/update")
+    public ResponseEntity<?> update(@RequestBody UserInfoRequest userRequest, @AuthenticationPrincipal UserDetails userDetails){
+        userDetailsService.update(userRequest, userDetails);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/detail")

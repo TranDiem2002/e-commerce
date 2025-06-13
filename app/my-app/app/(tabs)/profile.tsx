@@ -1,7 +1,6 @@
 // app/(tabs)/profile.tsx
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Picker } from "@react-native-picker/picker";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -29,15 +28,15 @@ const SKIN_TYPES = [
 ];
 
 const SKIN_CONCERNS = [
-  { id: "Acne", label: "Mụn" },
+  { id: "Acne", label: "Mụn trứng cá" },
+  { id: "Melasma", label: "Nám, tàn nhang" },
   { id: "EnlargedPores", label: "Lỗ chân lông to" },
-  { id: "Melasma", label: "Nám" },
 ];
 
 interface UserData {
   userName: string;
   email: string;
-  birthday: string;
+  phone: string;
   gender: string;
   avatar: string | null;
   skinConcerns: string[];
@@ -54,7 +53,7 @@ export default function ProfileScreen() {
 
   // Edit form state
   const [editedName, setEditedName] = useState("");
-  const [editedBirthday, setEditedBirthday] = useState("");
+  const [editedPhone, setEditedPhone] = useState("");
   const [editedGender, setEditedGender] = useState("");
   const [editedSkinTypes, setEditedSkinTypes] = useState<string[]>([]);
   const [editedSkinConcerns, setEditedSkinConcerns] = useState<string[]>([]);
@@ -96,13 +95,13 @@ export default function ProfileScreen() {
 
       // Initialize edit form data
       setEditedName(data.userName || "");
-      setEditedBirthday(data.birthday || "");
+      setEditedPhone(data.phone || "");
       setEditedGender(data.gender || "");
       setEditedSkinTypes(data.skinTypes || []);
       setEditedSkinConcerns(data.skinConcerns || []);
 
-      if (data.birthday) {
-        const [day, month, year] = data.birthday.split("/").map(Number);
+      if (data.phone) {
+        const [day, month, year] = data.phone.split("/").map(Number);
         if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
           setDate(new Date(year, month - 1, day));
         }
@@ -125,14 +124,13 @@ export default function ProfileScreen() {
 
       const updatedData = {
         userName: editedName,
-        birthday: editedBirthday,
         gender: editedGender,
         skinTypes: editedSkinTypes,
         skinConcerns: editedSkinConcerns,
       };
 
       const response = await fetch(`${API_USER}/user/update`, {
-        method: "PUT",
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -149,7 +147,7 @@ export default function ProfileScreen() {
         setUserData({
           ...userData,
           userName: editedName,
-          birthday: editedBirthday,
+          phone: editedPhone,
           gender: editedGender,
           skinTypes: editedSkinTypes,
           skinConcerns: editedSkinConcerns,
@@ -168,7 +166,7 @@ export default function ProfileScreen() {
     // Reset to original values
     if (userData) {
       setEditedName(userData.userName || "");
-      setEditedBirthday(userData.birthday || "");
+      setEditedPhone(userData.phone || "");
       setEditedGender(userData.gender || "");
       setEditedSkinTypes(userData.skinTypes || []);
       setEditedSkinConcerns(userData.skinConcerns || []);
@@ -201,7 +199,7 @@ export default function ProfileScreen() {
       const day = String(selectedDate.getDate()).padStart(2, "0");
       const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
       const year = selectedDate.getFullYear();
-      setEditedBirthday(`${day}/${month}/${year}`);
+      setEditedPhone(`${day}/${month}/${year}`);
     }
   };
 
@@ -369,19 +367,19 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Ngày sinh</Text>
+            <Text style={styles.infoLabel}>Số điện thoại</Text>
             {isEditing ? (
               <TouchableOpacity
                 onPress={showDatepicker}
                 style={styles.datePickerButton}
               >
                 <Text style={styles.datePickerText}>
-                  {editedBirthday || "Chọn ngày sinh"}
+                  {editedPhone || "Nhập số điện thoại"}
                 </Text>
                 <Ionicons name="calendar-outline" size={20} color="#666" />
               </TouchableOpacity>
             ) : (
-              <Text style={styles.infoValue}>{userData?.birthday}</Text>
+              <Text style={styles.infoValue}>{userData?.phone}</Text>
             )}
           </View>
 

@@ -1,5 +1,7 @@
+// src/pages/RegisterPage.tsx
+
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import {
@@ -9,9 +11,11 @@ import {
   Typography,
   Container,
   styled,
+  Alert,
 } from "@mui/material";
+import { API_USER } from "../../links";
 
-// Tạo styled component cho container chính
+// Styled container to center the form
 const RegisterContainer = styled(Container)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
@@ -21,18 +25,9 @@ const RegisterContainer = styled(Container)(({ theme }) => ({
   padding: theme.spacing(2),
 }));
 
-// Giữ nguyên RegisterForm như styled Box
-// const RegisterForm = styled(Box)(({ theme }) => ({
-//   width: "100%",
-//   maxWidth: "500px",
-//   display: "flex",
-//   flexDirection: "column",
-//   gap: theme.spacing(2),
-// }));
-
-// Component trang đăng ký
 const RegisterPage: React.FC = () => {
-  // State để lưu trữ dữ liệu form
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -41,127 +36,165 @@ const RegisterPage: React.FC = () => {
     confirmPassword: "",
   });
 
-  // Xử lý thay đổi input
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData((f) => ({ ...f, [name]: value }));
   };
 
-  // Giữ nguyên kiểu cho handleSubmit
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  // submit handler
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form data submitted:", formData);
-    // Thêm logic xử lý đăng ký tại đây
+    setError(null);
+
+    // simple validation
+    if (
+      !formData.fullName ||
+      !formData.phone ||
+      !formData.email ||
+      !formData.password ||
+      formData.password !== formData.confirmPassword
+    ) {
+      setError(
+        !formData.fullName
+          ? "Vui lòng nhập họ tên."
+          : !formData.phone
+          ? "Vui lòng nhập số điện thoại."
+          : !formData.email
+          ? "Vui lòng nhập email."
+          : formData.password !== formData.confirmPassword
+          ? "Mật khẩu xác nhận không khớp."
+          : "Vui lòng điền đầy đủ."
+      );
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        userName: formData.fullName.trim(),
+        phone: formData.phone.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+      };
+
+      const res = await fetch(`${API_USER}/user/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const text = await res.text();
+      if (!res.ok) throw new Error(text || "Đăng ký không thành công");
+
+      // success → navigate to login
+      alert("Đăng ký thành công! Vui lòng đăng nhập.");
+      navigate("/login");
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      setError(err.message || "Đã xảy ra lỗi khi đăng ký.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <>
       <Header cartItemsCount={0} />
-      <RegisterContainer>
+      <RegisterContainer maxWidth="sm">
         <Typography
           variant="h4"
-          component="h1"
           align="center"
-          sx={{ mb: 4, color: "#4c7d19", fontWeight: "500" }}
+          sx={{ mb: 4, color: "#4c7d19", fontWeight: 500 }}
         >
           Đăng Ký Tài khoản
         </Typography>
 
-        <Box sx={{ width: "100%", maxWidth: "500px" }}>
-          <form
-            onSubmit={handleSubmit}
-            style={{ display: "flex", flexDirection: "column", gap: "16px" }}
-          >
-            {/* Các TextField và các element khác */}
-            <TextField
-              fullWidth
-              required
-              id="fullName"
-              name="fullName"
-              label="Họ Tên (*)"
-              variant="outlined"
-              value={formData.fullName}
-              onChange={handleChange}
-            />
+        {error && (
+          <Alert severity="error" sx={{ mb: 2, width: "100%" }}>
+            {error}
+          </Alert>
+        )}
 
-            <TextField
-              fullWidth
-              required
-              id="phone"
-              name="phone"
-              label="Số điện thoại (*)"
-              variant="outlined"
-              value={formData.phone}
-              onChange={handleChange}
-            />
-
-            <TextField
-              fullWidth
-              required
-              id="email"
-              name="email"
-              label="Email (*)"
-              type="email"
-              variant="outlined"
-              value={formData.email}
-              onChange={handleChange}
-            />
-
-            <TextField
-              fullWidth
-              required
-              id="password"
-              name="password"
-              label="Nhập mật khẩu (*)"
-              type="password"
-              variant="outlined"
-              value={formData.password}
-              onChange={handleChange}
-            />
-
-            <TextField
-              fullWidth
-              required
-              id="confirmPassword"
-              name="confirmPassword"
-              label="Nhập lại mật khẩu (*)"
-              type="password"
-              variant="outlined"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-            />
-          </form>
-        </Box>
         <Box
+          component="form"
+          onSubmit={handleSubmit}
           sx={{
+            width: "100%",
             display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mt: 2,
+            flexDirection: "column",
+            gap: 2,
           }}
         >
-          <Link to="/login" style={{ textDecoration: "none", color: "#666" }}>
-            <Typography variant="body2">Về trang đăng nhập</Typography>
-          </Link>
+          <TextField
+            label="Họ Tên (*)"
+            name="fullName"
+            value={formData.fullName}
+            onChange={handleChange}
+            required
+          />
+          <TextField
+            label="Số điện thoại (*)"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+            required
+          />
+          <TextField
+            label="Email (*)"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+          <TextField
+            label="Mật khẩu (*)"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+          <TextField
+            label="Xác nhận mật khẩu (*)"
+            name="confirmPassword"
+            type="password"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            required
+          />
 
-          <Button
-            type="submit"
-            variant="contained"
+          <Box
             sx={{
-              backgroundColor: "#4c7d19",
-              color: "#fff",
-              padding: "10px 20px",
-              minWidth: "120px",
-              "&:hover": {
-                backgroundColor: "#3e6a13",
-              },
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mt: 2,
             }}
           >
-            Đăng ký
-          </Button>
+            <Link to="/login" style={{ textDecoration: "none" }}>
+              <Typography color="textSecondary">
+                ← Về trang đăng nhập
+              </Typography>
+            </Link>
+
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={loading}
+              sx={{
+                backgroundColor: "#4c7d19",
+                px: 3,
+                "&:hover": { backgroundColor: "#3e6a13" },
+              }}
+            >
+              {loading ? "Đang xử lý…" : "Đăng ký"}
+            </Button>
+          </Box>
         </Box>
       </RegisterContainer>
       <Footer />

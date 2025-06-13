@@ -39,6 +39,9 @@ public class PurchasedOrderServiceImpl implements PurchasedOrderService {
     private ProductCartRepository productCartRepository;
 
     @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
     private PurchasedOrdersCustomerRepository purchasedOrdersCustomerRepository;
 
     private List<PurchasedOrderResponse> purchasedOrderResponses;
@@ -85,6 +88,9 @@ public class PurchasedOrderServiceImpl implements PurchasedOrderService {
             purchasedProduct.setPrice(price);
             purchasedProduct.setProductEntity(productEntity.getProduct());
             purchasedProductEntities.add(purchasedProductRepository.save(purchasedProduct));
+
+            product.setStockRemaining(product.getStockRemaining() - productEntity.getQuantity());
+            productRepository.save(product);
         }
 
         purchasedOrdersEntity.setTotalMoney(totalMoney);

@@ -18,7 +18,7 @@ public class UserDetailResponse {
 
     private String email;
 
-    private String birthday;
+    private String phone;
 
     private String gender;
 

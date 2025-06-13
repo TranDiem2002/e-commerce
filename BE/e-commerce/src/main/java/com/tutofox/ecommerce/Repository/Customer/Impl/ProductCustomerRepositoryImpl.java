@@ -39,4 +39,13 @@ public class ProductCustomerRepositoryImpl implements ProductCustomerRepository 
         Query query = entityManager.createNativeQuery(sql.toString(), ProductEntity.class);
         return query.getResultList();
     }
+
+    @Override
+    public ProductEntity searchByName(String productName) {
+        String sql = "SELECT * FROM product WHERE product_name = :productName";
+        Query query = entityManager.createNativeQuery(sql, ProductEntity.class);
+        query.setParameter("productName", productName);
+        List<ProductEntity> results = query.getResultList();
+        return results.isEmpty() ? null : results.get(0);
+    }
 }

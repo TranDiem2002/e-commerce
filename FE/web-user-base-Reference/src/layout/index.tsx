@@ -6,6 +6,7 @@ import Register from "../pages/register";
 import Home from "../pages/home";
 import ProductDetail from "../pages/product";
 import CartPage from "../pages/cart";
+import ProfilePage from "../pages/profile";
 
 function DashBoardLayout() {
   return (
@@ -22,6 +23,7 @@ function DashBoardLayout() {
             <Route path="/home" element={<Home />} />
             <Route path="/product/:productId" element={<ProductDetail />} />
             <Route path="/cart" element={<CartPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
           </Routes>
         </Box>
       </Box>

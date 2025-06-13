@@ -93,4 +93,16 @@ public class ProductController {
     public ResponseEntity<?> recommendDetail(@AuthenticationPrincipal UserDetails userDetails, @RequestBody CartProductRequest cart){
         return ResponseEntity.ok(productService.getRecommend(userDetails, cart.getProductId()));
     }
+
+    @PostMapping("/createReview")
+    public ResponseEntity<?> createReview(@AuthenticationPrincipal UserDetails userDetails, @RequestBody ReviewProductRequest request){
+        productService.createReviewProduct(userDetails,request);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @GetMapping("/review/{productId}")
+    public ResponseEntity<?> getReview(@AuthenticationPrincipal UserDetails userDetails,
+                                       @PathVariable int productId){
+        return ResponseEntity.ok(productService.getReviewProduct(userDetails, productId));
+    }
 }

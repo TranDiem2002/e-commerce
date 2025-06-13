@@ -32,8 +32,8 @@ public class UserEntity implements UserDetails {
     @Column(name = "password")
     private String password;
 
-    @Column(name = "birthday")
-    private String birthday;
+    @Column(name = "phone")
+    private String phone;
 
     @Column(name = "gender")
     private Gender gender;

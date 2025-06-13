@@ -1,26 +1,26 @@
 // app/(tabs)/cart.tsx
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Picker } from "@react-native-picker/picker";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Image,
+  KeyboardAvoidingView,
+  Modal,
   SafeAreaView,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
-  Alert,
-  Modal,
-  TextInput,
-  ScrollView,
-  KeyboardAvoidingView,
 } from "react-native";
 import { API_USER } from "../../links";
-import { Picker } from "@react-native-picker/picker";
 
 // Tab types
 type TabType = "cart" | "purchased";
@@ -290,7 +290,7 @@ export default function CartScreen() {
         return;
       }
 
-      const response = await fetch(`${API_USER}/product/review`, {
+      const response = await fetch(`${API_USER}/product/createReview`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

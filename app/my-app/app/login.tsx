@@ -1,3 +1,4 @@
+// app/login.tsx
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack, useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -68,6 +69,10 @@ export default function LoginScreen() {
     }
   };
 
+  const handleGoToRegister = () => {
+    router.replace("/register");
+  };
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -120,6 +125,14 @@ export default function LoginScreen() {
               <Text style={styles.loginButtonText}>Log In</Text>
             )}
           </TouchableOpacity>
+
+          {/* Register Link */}
+          <View style={styles.registerContainer}>
+            <Text style={styles.registerText}>Chưa có tài khoản? </Text>
+            <TouchableOpacity onPress={handleGoToRegister} disabled={loading}>
+              <Text style={styles.registerLink}>Đăng ký ngay</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </SafeAreaView>
     </>
@@ -178,6 +191,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     minWidth: 200,
     alignItems: "center",
+    marginBottom: 20,
   },
   loginButtonDisabled: {
     backgroundColor: "#DDDDDD",
@@ -192,5 +206,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
     fontSize: 14,
+  },
+  registerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  registerText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+  },
+  registerLink: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
+    textDecorationLine: "underline",
   },
 });

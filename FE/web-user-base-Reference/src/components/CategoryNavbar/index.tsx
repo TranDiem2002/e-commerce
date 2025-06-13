@@ -19,18 +19,22 @@ interface CategoryNavbarProps {
   categories?: Category[];
   onCategoryClick?: (category: Category) => void;
   onSubCategoryClick?: (category: Category, subCategory: SubCategory) => void;
+  autoSelectFirst?: boolean; // Thêm prop để control auto-select
 }
 
 const CategoryNavbar: React.FC<CategoryNavbarProps> = ({
   categories: propCategories,
   onCategoryClick,
   onSubCategoryClick,
+  autoSelectFirst = true, // Default là true
 }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<
     Record<number, boolean>
   >({});
+  const [hasAutoSelected, setHasAutoSelected] = useState(false); // Flag để chỉ auto-select một lần
 
+  // useEffect để set categories từ props
   useEffect(() => {
     if (propCategories && propCategories.length > 0) {
       setCategories(propCategories);
@@ -42,9 +46,73 @@ const CategoryNavbar: React.FC<CategoryNavbarProps> = ({
     }
   }, [propCategories]);
 
+  // useEffect để auto-select category = 1 và subcategory = 1
+  useEffect(() => {
+    if (
+      autoSelectFirst &&
+      !hasAutoSelected &&
+      categories.length > 0 &&
+      onCategoryClick &&
+      onSubCategoryClick
+    ) {
+      // Tìm category có categoryId = 1
+      const targetCategory = categories.find((cat) => cat.categoryId === 1);
+
+      if (targetCategory) {
+        // Gọi onCategoryClick cho category = 1
+        onCategoryClick(targetCategory);
+
+        // Tìm subcategory có subCategoryId = 1 trong category này
+        const targetSubCategory = targetCategory.subCategoryResponses?.find(
+          (sub) => sub.subCategoryId === 1
+        );
+
+        if (targetSubCategory) {
+          // Gọi onSubCategoryClick cho subcategory = 1
+          onSubCategoryClick(targetCategory, targetSubCategory);
+        } else {
+          // Nếu không tìm thấy subcategory = 1, chọn subcategory đầu tiên
+          const firstSubCategory = targetCategory.subCategoryResponses?.[0];
+          if (firstSubCategory) {
+            onSubCategoryClick(targetCategory, firstSubCategory);
+          }
+        }
+
+        // Đánh dấu đã auto-select để không làm lại
+        setHasAutoSelected(true);
+      } else {
+        // Nếu không tìm thấy category = 1, chọn category đầu tiên
+        const firstCategory = categories[0];
+        if (firstCategory) {
+          onCategoryClick(firstCategory);
+
+          const firstSubCategory = firstCategory.subCategoryResponses?.[0];
+          if (firstSubCategory) {
+            onSubCategoryClick(firstCategory, firstSubCategory);
+          }
+
+          setHasAutoSelected(true);
+        }
+      }
+    }
+  }, [
+    categories,
+    autoSelectFirst,
+    hasAutoSelected,
+    onCategoryClick,
+    onSubCategoryClick,
+  ]);
+
+  // Reset hasAutoSelected khi categories thay đổi (nếu cần)
+  useEffect(() => {
+    if (propCategories && propCategories.length > 0) {
+      setHasAutoSelected(false);
+    }
+  }, [propCategories]);
+
   const toggleCategory = (e: React.MouseEvent, categoryId: number) => {
-    e.preventDefault(); // Ngăn chặn hành vi mặc định
-    e.stopPropagation(); // Ngăn lan truyền sự kiện
+    e.preventDefault();
+    e.stopPropagation();
     setExpandedCategories((prev) => ({
       ...prev,
       [categoryId]: !prev[categoryId],

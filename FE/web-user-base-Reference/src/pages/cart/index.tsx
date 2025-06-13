@@ -39,6 +39,13 @@ const CartPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Thêm vào phần state declarations (sau line ~29)
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
+  const [currentReviewProduct, setCurrentReviewProduct] = useState(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewContent, setReviewContent] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
   const navigate = useNavigate();
 
   // Fetch cart items when component mounts or tab changes
@@ -357,6 +364,81 @@ const CartPage = () => {
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  // Thêm sau hàm fetchOrders (sau line ~385)
+  const openReviewModal = (product) => {
+    setCurrentReviewProduct(product);
+    setReviewRating(5);
+    setReviewContent("");
+    setReviewModalVisible(true);
+  };
+
+  const closeReviewModal = () => {
+    setReviewModalVisible(false);
+    setCurrentReviewProduct(null);
+    setReviewRating(5);
+    setReviewContent("");
+  };
+
+  const renderStarRating = (rating, onRatingChange) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <span
+          key={i}
+          onClick={() => onRatingChange && onRatingChange(i)}
+          style={{
+            cursor: onRatingChange ? "pointer" : "default",
+            color: i <= rating ? "#ffa000" : "#ccc",
+            fontSize: "24px",
+            marginRight: "5px",
+          }}
+        >
+          ★
+        </span>
+      );
+    }
+    return <div style={{ display: "flex", alignItems: "center" }}>{stars}</div>;
+  };
+
+  const submitReview = async () => {
+    if (!currentReviewProduct) return;
+
+    try {
+      setIsSubmittingReview(true);
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("Vui lòng đăng nhập lại");
+        return;
+      }
+
+      const response = await fetch(`${API_USER}/product/createReview`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productName: currentReviewProduct.productName,
+          rating: reviewRating,
+          content: reviewContent.trim() || "",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Không thể gửi đánh giá");
+      }
+
+      alert("Cảm ơn bạn đã đánh giá sản phẩm!");
+      closeReviewModal();
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      alert("Không thể gửi đánh giá. Vui lòng thử lại sau.");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   return (
     <div className="cart-page">
@@ -911,6 +993,32 @@ const CartPage = () => {
                                 x{product.mount}
                               </div>
                             </div>
+
+                            {/* Nút đánh giá chỉ hiển thị cho đơn hàng hoàn thành */}
+                            {(order.purchasedOrderStatus === "Delivered" ||
+                              order.purchasedOrderStatus === "Hoàn thành" ||
+                              order.purchasedOrderStatus === "Completed") && (
+                              <div style={{ marginTop: "10px" }}>
+                                <button
+                                  onClick={() => openReviewModal(product)}
+                                  style={{
+                                    backgroundColor: "#fff",
+                                    border: "1px solid #ffa000",
+                                    color: "#ffa000",
+                                    padding: "5px 12px",
+                                    borderRadius: "4px",
+                                    fontSize: "12px",
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                  }}
+                                >
+                                  <span>★</span>
+                                  Đánh giá
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )
@@ -1040,6 +1148,161 @@ const CartPage = () => {
           </div>
         )}
       </div>
+      {reviewModalVisible && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: "8px",
+              padding: "30px",
+              width: "90%",
+              maxWidth: "500px",
+              maxHeight: "80vh",
+              overflow: "auto",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "20px",
+                borderBottom: "1px solid #eee",
+                paddingBottom: "15px",
+              }}
+            >
+              <h3 style={{ margin: 0, color: "#3e6a13" }}>Đánh giá sản phẩm</h3>
+              <button
+                onClick={closeReviewModal}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "24px",
+                  cursor: "pointer",
+                  color: "#666",
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {currentReviewProduct && (
+              <div>
+                <div style={{ marginBottom: "20px" }}>
+                  <h4 style={{ margin: "0 0 10px 0", color: "#333" }}>
+                    {currentReviewProduct.productName}
+                  </h4>
+                </div>
+
+                <div style={{ marginBottom: "20px" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "8px",
+                      fontWeight: "500",
+                      color: "#333",
+                    }}
+                  >
+                    Đánh giá của bạn:
+                  </label>
+                  {renderStarRating(reviewRating, setReviewRating)}
+                </div>
+
+                <div style={{ marginBottom: "25px" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "8px",
+                      fontWeight: "500",
+                      color: "#333",
+                    }}
+                  >
+                    Nhận xét (tùy chọn):
+                  </label>
+                  <textarea
+                    value={reviewContent}
+                    onChange={(e) => setReviewContent(e.target.value)}
+                    placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm..."
+                    maxLength={500}
+                    style={{
+                      width: "100%",
+                      minHeight: "100px",
+                      padding: "12px",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                      fontSize: "14px",
+                      resize: "vertical",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  <div
+                    style={{
+                      textAlign: "right",
+                      marginTop: "5px",
+                      fontSize: "12px",
+                      color: "#666",
+                    }}
+                  >
+                    {reviewContent.length}/500 ký tự
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "10px",
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  <button
+                    onClick={closeReviewModal}
+                    disabled={isSubmittingReview}
+                    style={{
+                      padding: "10px 20px",
+                      border: "1px solid #ddd",
+                      backgroundColor: "#fff",
+                      color: "#666",
+                      borderRadius: "4px",
+                      cursor: isSubmittingReview ? "not-allowed" : "pointer",
+                      opacity: isSubmittingReview ? 0.6 : 1,
+                    }}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={submitReview}
+                    disabled={isSubmittingReview}
+                    style={{
+                      padding: "10px 20px",
+                      border: "none",
+                      backgroundColor: "#3e6a13",
+                      color: "#fff",
+                      borderRadius: "4px",
+                      cursor: isSubmittingReview ? "not-allowed" : "pointer",
+                      opacity: isSubmittingReview ? 0.6 : 1,
+                    }}
+                  >
+                    {isSubmittingReview ? "Đang gửi..." : "Gửi đánh giá"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

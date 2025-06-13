@@ -11,4 +11,6 @@ public interface ProductCustomerRepository {
     List<ProductEntity> findByProductIdIn(List<Integer> productIds);
 
     List<ProductEntity> searchByProductName(String contentSearch);
+
+    ProductEntity searchByName(String productName);
 }

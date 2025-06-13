@@ -1,11 +1,9 @@
 package com.tutofox.ecommerce.Service;
 
 import com.tutofox.ecommerce.Model.Request.ProductRequest;
+import com.tutofox.ecommerce.Model.Request.ReviewProductRequest;
 import com.tutofox.ecommerce.Model.Request.SubCategoryRequest;
-import com.tutofox.ecommerce.Model.Response.ProductDetailResponse;
-import com.tutofox.ecommerce.Model.Response.ProductResponse;
-import com.tutofox.ecommerce.Model.Response.ProductResponsePage;
-import com.tutofox.ecommerce.Model.Response.UserCartResponse;
+import com.tutofox.ecommerce.Model.Response.*;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
@@ -32,4 +30,8 @@ public interface ProductService {
     ProductResponsePage searchProduct(UserDetails userDetails, String contentSearch);
 
     List<ProductResponse> getRecommend(UserDetails userDetails, int productId);
+
+    void createReviewProduct(UserDetails userDetails,ReviewProductRequest reviewRequest);
+
+    List<ReviewProductResponse> getReviewProduct(UserDetails userDetails, int productId);
 }

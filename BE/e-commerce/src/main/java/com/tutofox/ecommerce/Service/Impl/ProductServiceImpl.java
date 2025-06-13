@@ -5,12 +5,14 @@ import com.tutofox.ecommerce.Caculator.ItemBasedCollaborativeFiltering;
 import com.tutofox.ecommerce.Caculator.UserBasedCollaborativeFiltering;
 import com.tutofox.ecommerce.Entity.*;
 import com.tutofox.ecommerce.Model.Request.ProductRequest;
+import com.tutofox.ecommerce.Model.Request.ReviewProductRequest;
 import com.tutofox.ecommerce.Model.Request.SubCategoryRequest;
 import com.tutofox.ecommerce.Model.Response.*;
 import com.tutofox.ecommerce.Repository.*;
 import com.tutofox.ecommerce.Repository.Customer.*;
 import com.tutofox.ecommerce.Service.ProductService;
 import com.tutofox.ecommerce.Utils.ProductMapper;
+import com.tutofox.ecommerce.Utils.RatingMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -79,12 +81,18 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private ProductCartRepository productCartRepository;
 
+    @Autowired
+    private RatingReponsitory ratingReponsitory;
+
     private ProductMapper productMapper;
+
+    private RatingMapper ratingMapper;
 
     private List<ProductResponse> productPage;
 
     public ProductServiceImpl() {
         this.productMapper = new ProductMapper();
+        this.ratingMapper = new RatingMapper();
     }
 
     @Override
@@ -278,37 +286,30 @@ public class ProductServiceImpl implements ProductService {
         if (page == 1){
             productPage = new ArrayList<>();
             Map<Integer, Double> hybridScores = new HashMap<>();
-
             Optional<UserEntity> user = userRepository.findByEmail(userDetails.getUsername());
             UserEntity userEntity = user.get();
-
             List<ProductEntity> productEntityList = productRepository.findAll().stream()
                     .filter(product -> product.getSubCategory().getSubCategoryId() == subCategoryId)
                     .collect(Collectors.toList());
-
             Map<Integer, Double> contentBased = contentBaseCore.calculateContentBasedScore(userEntity, productEntityList);
             Map<Integer, Double> userBasedCore =  userBased.recommendProductsUserBased(user.get(), subCategoryId);
             Map<Integer, Double> itemBasedCore = itemBased.recommendProductsItemBased(user.get(), subCategoryId);
-
             // Tập hợp tất cả productId từ ba map
             Set<Integer> allProductIds = new HashSet<>();
             allProductIds.addAll(contentBased.keySet());
             allProductIds.addAll(userBasedCore.keySet());
             allProductIds.addAll(itemBasedCore.keySet());
-
             // Tính điểm tổng hợp cho mỗi sản phẩm
             for (Integer productId : allProductIds) {
                 // Lấy điểm từ mỗi hệ gợi ý (mặc định là 0 nếu không có)
                 double contentScore = contentBased.getOrDefault(productId, 0.0);
                 double userScore = userBasedCore.getOrDefault(productId, 0.0);
                 double itemScore = itemBasedCore.getOrDefault(productId, 0.0);
-
                 // Tính điểm tổng hợp theo trọng số
                 double combinedScore =
                         contentScore * 0.5 +
                                 userScore * 0.2 +
                                 itemScore * 0.3;
-
                 // Thêm vào map kết quả
                 hybridScores.put(productId, combinedScore);
             }
@@ -491,6 +492,36 @@ public class ProductServiceImpl implements ProductService {
         });
 
         return productResponses;
+    }
+
+    @Override
+    public void createReviewProduct(UserDetails userDetails, ReviewProductRequest reviewRequest) {
+        UserEntity userEntity = userRepository.findByEmail(userDetails.getUsername()).get();
+
+        ProductEntity product = productCustomerRepository.searchByName(reviewRequest.getProductName());
+        List<Rating> ratings = product.getProductRatings();
+        if (ratings == null)
+            ratings = new ArrayList<>();
+        Rating addRating = new Rating();
+        addRating = ratingReponsitory.save(addRating);
+        addRating.setUserEntity(userEntity);
+        addRating.setRating(reviewRequest.getRating());
+        addRating.setContent(reviewRequest.getContent());
+        addRating = ratingReponsitory.save(addRating);
+
+        ratings.add(addRating);
+        product.setProductRatings(ratings);
+        productRepository.save(product);
+    }
+
+    @Override
+    public List<ReviewProductResponse> getReviewProduct(UserDetails userDetails, int productId) {
+        ProductEntity product = productRepository.findById(productId).get();
+        List<Rating> ratings = product.getProductRatings();
+        if (ratings == null)
+            return null;
+        return ratings.stream().map(rating -> ratingMapper.convertToResponse(rating))
+                .collect(Collectors.toList());
     }
 
 

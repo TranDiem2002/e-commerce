@@ -20,7 +20,7 @@ interface RecommendedProduct {
 
 interface ProductReview {
   ratingId: number;
-  userId: number;
+  userName: string;
   rating: number;
   content: string;
 }
@@ -976,7 +976,7 @@ const ProductDetail: React.FC = () => {
                         marginRight: "15px",
                       }}
                     >
-                      {`U${review.userId}`}
+                      {`U${review.userName}`}
                     </div>
                     <div>
                       <div

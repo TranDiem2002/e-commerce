@@ -7,6 +7,7 @@ export default function IndexScreen() {
 
   // Automatically navigate to the home screen after 3 seconds
   useEffect(() => {
+    console.log("loading main component");
     const timer = setTimeout(() => {
       router.push("/home"); // Navigate to the home screen
     }, 1000); // 3 seconds delay

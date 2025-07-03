@@ -1,7 +1,7 @@
 // components/ui/Header.tsx
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Image, StyleSheet, TouchableOpacity, View, Text } from "react-native";
+import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface HeaderProps {
   cartCount?: number;

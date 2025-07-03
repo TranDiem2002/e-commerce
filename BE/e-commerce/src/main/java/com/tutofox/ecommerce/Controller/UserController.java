@@ -1,10 +1,13 @@
 package com.tutofox.ecommerce.Controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tutofox.ecommerce.Model.Request.AuthenticationRequest;
+import com.tutofox.ecommerce.Model.Request.LoginRequest;
 import com.tutofox.ecommerce.Model.Request.UserInfoRequest;
 import com.tutofox.ecommerce.Model.Request.UserRequest;
 import com.tutofox.ecommerce.Model.Response.AuthenticationResponse;
 import com.tutofox.ecommerce.Service.UserDetailService;
+import com.tutofox.ecommerce.Utils.AesUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,6 +40,24 @@ public class UserController {
     public ResponseEntity<AuthenticationResponse> login(@RequestBody  AuthenticationRequest auth){
         AuthenticationResponse response = userDetailsService.authentication(auth);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/authenticate/website")
+    public ResponseEntity<?> login(@RequestBody LoginRequest payload) {
+        String encryptedData = payload.getEncryptedData();
+        String iv = payload.getIv();
+
+        String decryptedData = null;
+        try {
+            decryptedData = AesUtil.decrypt(encryptedData, iv);
+            ObjectMapper objectMapper = new ObjectMapper();
+            AuthenticationRequest auth = objectMapper.readValue(decryptedData, AuthenticationRequest.class);
+            AuthenticationResponse response = userDetailsService.authentication(auth);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Lỗi giải mã", HttpStatus.BAD_REQUEST);
+        }
     }
 
     @PostMapping("/update")

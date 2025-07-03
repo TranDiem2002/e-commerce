@@ -57,7 +57,7 @@ interface SkinOption {
 const SKIN_TYPES: SkinOption[] = [
   { id: "Normal", label: "Da thường" },
   { id: "Dry", label: "Da khô" },
-  { id: "Oily", label: "Da dầu" },
+  { id: "Oil", label: "Da dầu" },
   { id: "Combination", label: "Da hỗn hợp" },
   { id: "Sensitive", label: "Da nhạy cảm" },
 ];
